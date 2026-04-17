@@ -1,202 +1,257 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO_CORE_v22</title>
+    <title>PROMOTION TRACKER V42.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            --bg: #050505;
-            --panel: #0d0d0d;
-            --neon-red: #ff0000;
-            --neon-green: #00ff88;
-            --border: #1a1a1a;
-            --text: #ffffff;
+            --bg: #000000;
+            --panel-bg: #0a0a0a;
+            --panel-inner: #000000;
+            --accent-red: #ff3b30;
+            --accent-orange: #ff9500;
+            --accent-green: #4cd964;
+            --accent-blue: #00a3ff;
+            --border: #1c1c1e;
+            --text-main: #ffffff;
+            --text-dim: #888;
         }
 
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; text-transform: uppercase; }
+        * { box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
+        body { background-color: var(--bg); color: var(--text-main); margin: 0; padding: 10px; font-size: 11px; }
+        .container { max-width: 600px; margin: 0 auto; }
 
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 15px;
-            font-weight: 900;
-            letter-spacing: 1px;
-        }
+        header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .logo-sq { background: var(--accent-red); color: white; padding: 2px 8px; font-weight: 900; font-size: 18px; border-radius: 4px; }
+        h1 { font-size: 0.9rem; margin: 0; font-style: italic; opacity: 0.9; letter-spacing: 1px; }
 
-        .container { max-width: 480px; margin: 0 auto; }
+        .admin-controls { display: flex; gap: 8px; }
+        .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 34px; height: 34px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .ctrl-btn svg { width: 18px; height: 18px; fill: var(--accent-blue); }
 
-        header {
-            border-left: 4px solid var(--neon-red);
-            padding: 10px 15px;
-            margin-bottom: 30px;
-            background: linear-gradient(90deg, #110000 0%, transparent 100%);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+        .modality-selector { display: flex; gap: 4px; margin-bottom: 8px; }
+        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 2px; font-size: 9px; cursor: pointer; text-align: center; }
+        .mod-btn.active { border-color: var(--accent-orange); color: var(--accent-orange); }
 
-        h1 { font-size: 0.8rem; margin: 0; font-style: italic; opacity: 0.8; }
+        .input-row { display: flex; gap: 6px; }
+        input[type="text"] { flex: 2; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); padding: 10px; font-size: 12px; outline: none; }
+        input[type="text"]::placeholder { color: #444; }
+        
+        .icon-box { position: relative; background: var(--panel-inner); border: 1px solid var(--border); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+        .icon-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
+        .icon-box svg { width: 18px; height: 18px; pointer-events: none; }
+        
+        .save-btn { flex: 1; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%); }
 
-        /* INPUT GRID */
-        .input-box { display: grid; gap: 15px; margin-bottom: 30px; }
-
-        .top-row {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .desc-field { flex: 2; border-bottom: 1px solid var(--border); }
-        .desc-field input { 
-            background: transparent; border: none; color: #fff; 
-            padding: 10px 0; font-size: 11px; width: 100%; outline: none; 
-            font-weight: 900;
-        }
-
-        /* CALENDAR ICON ONLY LOGIC */
-        .icon-date-input {
-            position: relative;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--panel);
+        .card { 
+            background: var(--panel-bg); 
+            margin-bottom: 6px; 
+            display: grid; 
+            grid-template-columns: 1fr 145px 85px 40px; 
+            align-items: center; 
+            padding: 12px 15px; 
+            border-radius: 4px;
             border: 1px solid var(--border);
-            cursor: pointer;
+            gap: 10px;
         }
 
-        .icon-date-input span { font-size: 18px; }
+        .p-info { display: flex; flex-direction: column; overflow: hidden; }
+        .p-title { font-size: 1.1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; }
+        .p-mod-tag { font-size: 8px; color: var(--text-dim); margin-top: 2px; letter-spacing: 1px; }
+        .p-status { font-size: 9px; font-weight: 900; text-align: right; font-style: italic; }
+        .p-dates { display: flex; flex-direction: column; font-size: 9px; color: var(--text-dim); text-align: right; line-height: 1.3; }
+        .p-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+        .act-btn { background: none; border: none; cursor: pointer; padding: 2px; }
+        .act-btn svg { width: 15px; height: 15px; }
 
-        /* De truc: de input is onzichtbaar maar dekt het hele icoon */
-        .icon-date-input input[type="date"] {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .bottom-row {
-            display: grid;
-            grid-template-columns: 1fr 100px;
-            gap: 15px;
-        }
-
-        select {
-            background: transparent; border: none; border-bottom: 1px solid var(--border);
-            color: #fff; padding: 10px 0; font-size: 10px; font-weight: 900; outline: none;
-        }
-
-        .save-btn {
-            background: var(--neon-green);
-            color: #000; border: none; font-size: 10px; font-weight: 900;
-            cursor: pointer; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
-        }
-
-        /* CARDS */
-        .card {
-            background: var(--panel); border: 1px solid var(--border);
-            padding: 15px; margin-bottom: 12px; position: relative;
-            border-left: 2px solid var(--neon-red);
-        }
-
-        .p-title { font-size: 0.9rem; margin-bottom: 4px; color: #eee; }
-        .p-meta { font-size: 8px; color: #444; }
-
-        .progress-track { height: 2px; background: #000; margin: 15px 0 8px 0; overflow: hidden; }
-        .progress-fill { height: 100%; transition: 0.8s ease-out; }
-
-        .date-footer { display: flex; justify-content: space-between; font-size: 8px; color: #333; }
-        .del-x { position: absolute; top: 10px; right: 10px; cursor: pointer; color: #222; font-size: 16px; }
-
+        #importFile { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>PROMO_TACT_v22</h1>
-        <div style="font-size: 8px; color: var(--neon-red);">[ACTIVE_LINK]</div>
+        <div class="header-left"><div class="logo-sq">P</div><h1>PROMOTION TRACKER</h1></div>
+        <div class="admin-controls">
+            <div class="ctrl-btn" onclick="exportPDF()"><svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M16,11V18H14V11H16M12,14V18H10V14H12M8,16V18H6V16H8Z"/></svg></div>
+            <div class="ctrl-btn" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg></div>
+            <div class="ctrl-btn" onclick="triggerImport()"><svg viewBox="0 0 24 24"><path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"/></svg></div>
+        </div>
     </header>
 
-    <div class="input-box">
-        <div class="top-row">
-            <div class="desc-field">
-                <input type="text" id="name" placeholder="OMSCHRIJVING">
-            </div>
-            <div class="icon-date-input" title="START_DATUM">
-                <span>🏁</span>
-                <input type="date" id="start">
-            </div>
-            <div class="icon-date-input" title="DEADLINE">
-                <span>🎯</span>
-                <input type="date" id="end">
-            </div>
+    <div class="input-panel">
+        <div class="modality-selector">
+            <div class="mod-btn active" data-mod="CASHBACK" onclick="setMod(this, 'CASHBACK')">CASHBACK</div>
+            <div class="mod-btn" data-mod="BUNDLE" onclick="setMod(this, 'BUNDLE')">BUNDLE</div>
+            <div class="mod-btn" data-mod="DISCOUNT" onclick="setMod(this, 'DISCOUNT')">DISCOUNT</div>
         </div>
-        
-        <div class="bottom-row">
-            <select id="type">
-                <option>CASHBACK</option>
-                <option>KORTING</option>
-                <option>FREE_ITEM</option>
-            </select>
-            <button class="save-btn" onclick="add()">DEPLOY</button>
+        <div class="input-row">
+            <input type="text" id="name" placeholder="PROMOTION NAME">
+            <div class="icon-box"><svg viewBox="0 0 24 24" style="fill:var(--accent-green)"><path d="M19,4H18V2H16V4H8V2H6V4H5C3.89,4 3,4.9 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8M7,12H12V17H7V12Z"/></svg><input type="date" id="start"></div>
+            <div class="icon-box"><svg viewBox="0 0 24 24" style="fill:var(--accent-red)"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6V12L16,14.5L16.7,13.2L13.5,11.3V6H12Z"/></svg><input type="date" id="end"></div>
+            <button class="save-btn" id="save-action-btn" onclick="handleAction()">ADD</button>
         </div>
     </div>
-
-    <div id="active-list"></div>
+    
+    <input type="file" id="importFile" accept=".csv" onchange="importCSV(event)">
+    <div id="list"></div>
 </div>
 
 <script>
-    let promos = JSON.parse(localStorage.getItem('p_v22')) || [];
+    let promos = JSON.parse(localStorage.getItem('p_v36_final')) || [];
+    let currentMod = 'CASHBACK';
+    let editId = null;
 
-    function add() {
-        const n = document.getElementById('name').value, s = document.getElementById('start').value, e = document.getElementById('end').value;
-        if(!n || !s || !e) { alert('DATA_MISSING'); return; }
-        promos.push({ id: Date.now(), name: n, start: s, end: e, type: document.getElementById('type').value });
-        save();
-        document.getElementById('name').value = '';
-        document.getElementById('start').value = '';
-        document.getElementById('end').value = '';
+    function setMod(btn, mod) {
+        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+        if(btn) btn.classList.add('active');
+        else { const target = document.querySelector(`[data-mod="${mod}"]`); if(target) target.classList.add('active'); }
+        currentMod = mod;
     }
 
-    function save() {
-        localStorage.setItem('p_v22', JSON.stringify(promos));
-        render();
+    function handleAction() {
+        const n = document.getElementById('name'), s = document.getElementById('start'), e = document.getElementById('end');
+        if(!n.value || !s.value || !e.value) return;
+
+        if(editId !== null) {
+            const idx = promos.findIndex(p => p.id === editId);
+            if(idx !== -1) promos[idx] = { ...promos[idx], name: n.value, start: s.value, end: e.value, mod: currentMod };
+            editId = null;
+            document.getElementById('save-action-btn').innerText = 'ADD';
+        } else {
+            promos.push({ id: Date.now(), name: n.value, start: s.value, end: e.value, mod: currentMod });
+        }
+        saveAndRender();
+        n.value = ''; s.value = ''; e.value = '';
     }
+
+    function saveAndRender() { localStorage.setItem('p_v36_final', JSON.stringify(promos)); render(); }
 
     function render() {
-        const container = document.getElementById('active-list');
-        const d = new Date();
-        const nu = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        const container = document.getElementById('list');
+        const now = new Date();
+        now.setHours(0,0,0,0);
+        const nowMs = now.getTime();
+        
         container.innerHTML = '';
+        promos.sort((a,b) => new Date(a.end) - new Date(b.end));
 
         promos.forEach(p => {
-            const d1 = new Date(p.start).getTime(), d2 = new Date(p.end).getTime();
-            let pct = 0;
-            if (nu >= d1) pct = Math.min(100, Math.floor(((nu - d1) / (d2 - d1)) * 100));
-            if (nu > d2) pct = 100;
+            const dS = new Date(p.start); dS.setHours(0,0,0,0);
+            const dE = new Date(p.end); dE.setHours(0,0,0,0);
+            const startMs = dS.getTime();
+            const endMs = dE.getTime();
+            
+            const diffMs = endMs - nowMs;
+            const daysLeft = Math.round(diffMs / (1000 * 60 * 60 * 24));
+            
+            let statusText = "";
+            let color = 'var(--accent-green)';
 
-            let kleur = pct >= 85 ? 'var(--neon-red)' : (pct >= 50 ? '#ffaa00' : 'var(--neon-green)');
+            if (nowMs < startMs) {
+                statusText = "UPCOMING";
+                color = 'var(--accent-blue)';
+            } else if (nowMs > endMs) {
+                statusText = "EXPIRED (REMOVE POS)";
+                color = "#444";
+            } else {
+                if (daysLeft === 0) {
+                    statusText = "LAST CHANCE (TODAY)";
+                    color = 'var(--accent-red)';
+                } else if (daysLeft === 1) {
+                    statusText = "EXPIRES TOMORROW";
+                    color = 'var(--accent-red)';
+                } else if (daysLeft <= 3) {
+                    statusText = "EXPIRING SOON";
+                    color = 'var(--accent-orange)';
+                } else {
+                    statusText = "ACTIVE";
+                    color = 'var(--accent-green)';
+                }
+            }
 
             const card = document.createElement('div');
             card.className = 'card';
-            card.style.borderLeftColor = kleur;
+            card.style.borderLeft = `4px solid ${color}`;
+
             card.innerHTML = `
-                <div class="del-x" onclick="del(${p.id})">×</div>
-                <div class="p-title">${p.name}</div>
-                <div class="p-meta">${p.type} | ${pct}%</div>
-                <div class="progress-track"><div class="progress-fill" style="width:${pct}%; background:${kleur}"></div></div>
-                <div class="date-footer"><span>${p.start}</span><span>${p.end}</span></div>
-            `;
+                <div class="p-info">
+                    <div class="p-title">${p.name}</div>
+                    <div class="p-mod-tag">${p.mod}</div>
+                </div>
+                <div class="p-status" style="color:${color}">${statusText}</div>
+                <div class="p-dates">
+                    <span>${p.start.split('-').reverse().join('/')}</span>
+                    <span>${p.end.split('-').reverse().join('/')}</span>
+                </div>
+                <div class="p-actions">
+                    <button class="act-btn" onclick="editPromo(${p.id})"><svg viewBox="0 0 24 24" style="fill:${color}"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg></button>
+                    <button class="act-btn" onclick="del(${p.id})"><svg viewBox="0 0 24 24" style="fill:${color}"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button>
+                </div>`;
             container.appendChild(card);
         });
     }
 
-    function del(id) { promos = promos.filter(x=>x.id!==id); save(); }
+    function editPromo(id) {
+        const p = promos.find(x => x.id === id);
+        if(!p) return;
+        editId = id;
+        document.getElementById('name').value = p.name;
+        document.getElementById('start').value = p.start;
+        document.getElementById('end').value = p.end;
+        setMod(null, p.mod);
+        document.getElementById('save-action-btn').innerText = 'SAVE';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function del(id) { if(confirm('DELETE THIS PROMOTION?')) { promos = promos.filter(x => x.id !== id); saveAndRender(); } }
+    
+    function triggerImport() { document.getElementById('importFile').click(); }
+    function importCSV(e) {
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const lines = ev.target.result.split('\n').slice(1);
+            lines.forEach(line => {
+                const parts = line.split(',');
+                if(parts.length >= 5) {
+                    promos.push({ id: Date.now()+Math.random(), name: parts[1].trim(), start: parts[2].trim(), end: parts[3].trim(), mod: parts[4].trim() });
+                }
+            });
+            saveAndRender();
+        };
+        reader.readAsText(e.target.files[0]);
+    }
+
+    async function exportPDF() {
+        if(promos.length === 0) return;
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("PROMOTION TRACKER REPORT", 15, 25);
+        let y = 45;
+        promos.forEach(p => {
+            doc.setFontSize(14); doc.setTextColor(255, 255, 255); doc.text(`${p.name}`, 15, y);
+            doc.setFontSize(10); doc.setTextColor(150, 150, 150); doc.text(`${p.mod} | ${p.start} - ${p.end}`, 15, y+7);
+            y += 20;
+            if(y > 270) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y=20; }
+        });
+        doc.save('Promotion_Report.pdf');
+    }
+
+    function exportCSV() {
+        let csv = "ID,NAME,START,END,MODALITY\n";
+        promos.forEach(p => { csv += `${p.id},${p.name},${p.start},${p.end},${p.mod}\n`; });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob);
+        a.download = `PROMO_BACKUP.csv`; a.click();
+    }
+    
     render();
+    setInterval(render, 60000);
 </script>
 </body>
 </html>
