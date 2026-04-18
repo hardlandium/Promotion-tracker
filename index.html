@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V44.4</title>
+    <title>PROMO TRACKER V44.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -44,7 +44,8 @@
         .mod-btn[data-mod="DISCOUNT"].active { border-color: var(--accent-purple); color: var(--accent-purple); background: rgba(175, 82, 222, 0.1); }
 
         .input-row { display: flex; gap: 4px; align-items: center; }
-        input[type="text"] { flex: 1; min-width: 0; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); padding: 10px; font-size: 12px; border-radius: 6px; outline: none; }
+        input[type="text"], input[type="date"] { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; outline: none; }
+        input[type="text"] { flex: 1; padding: 10px; font-size: 12px; }
         
         .icon-box { position: relative; width: 38px; height: 38px; background: var(--panel-inner); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; }
         .icon-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
@@ -52,47 +53,18 @@
         
         .save-btn { width: 45px; height: 38px; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; border-radius: 6px; cursor: pointer; font-size: 9px; flex-shrink: 0; }
 
-        .card { 
-            background: var(--panel-bg); 
-            margin-bottom: 6px; 
-            padding: 10px; 
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
+        /* Filter Section */
+        .filter-bar { display: flex; gap: 6px; margin-bottom: 10px; padding: 0 4px; }
+        .filter-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 12px; border-radius: 20px; font-size: 9px; cursor: pointer; transition: 0.2s; }
+        .filter-chip.active { background: var(--text-main); color: #000; border-color: var(--text-main); }
 
-        .card-row-top { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 6px;
-        }
-
+        .card { background: var(--panel-bg); margin-bottom: 6px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+        .card-row-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; }
         .card-dates-compact { display: flex; gap: 6px; font-size: 12px; align-items: center; flex-wrap: wrap; }
         .card-dates-compact .d-val { font-weight: 900; letter-spacing: 0.5px; }
-        
         .status-badge { font-size: 11px; font-weight: 900; font-style: italic; letter-spacing: 0.5px; }
-
-        .card-row-bottom { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-
-        .p-title-compact { 
-            font-size: 15px; 
-            color: #fff; 
-            font-style: italic; 
-            flex: 1;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding-right: 15px;
-        }
-
+        .card-row-bottom { display: flex; justify-content: space-between; align-items: center; }
+        .p-title-compact { font-size: 15px; color: #fff; font-style: italic; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 15px; }
         .card-actions-compact { display: flex; gap: 15px; align-items: center; flex-shrink: 0; }
         .act-btn-sm { background: none; border: none; display: flex; align-items: center; cursor: pointer; }
         .act-btn-sm svg { width: 18px; height: 18px; }
@@ -131,6 +103,11 @@
             <button class="save-btn" id="save-action-btn" onclick="handleAction()">ADD</button>
         </div>
     </div>
+
+    <div class="filter-bar">
+        <button class="filter-chip active" id="filter-all" onclick="setFilter('all')">ALL</button>
+        <button class="filter-chip" id="filter-month" onclick="setFilter('month')">THIS MONTH</button>
+    </div>
     
     <input type="file" id="importFile" accept=".csv, text/csv, text/plain, .txt" onchange="importCSV(event)">
     <div id="list"></div>
@@ -140,31 +117,43 @@
     let promos = JSON.parse(localStorage.getItem('p_v36_final')) || [];
     let selectedMods = [];
     let editId = null;
+    let currentFilter = 'all';
 
     const COLORS = {
-        CASHBACK: [0, 163, 255],
-        BUNDLE: [255, 149, 0],
-        DISCOUNT: [175, 82, 222],
-        ACTIVE: [76, 217, 100],
-        UPCOMING: [0, 163, 255],
-        EXPIRED: [68, 68, 68],
-        EXPIRING: [255, 59, 48]
+        CASHBACK: [0, 163, 255], BUNDLE: [255, 149, 0], DISCOUNT: [175, 82, 222],
+        ACTIVE: [76, 217, 100], UPCOMING: [0, 163, 255], EXPIRED: [68, 68, 68], EXPIRING: [255, 59, 48]
     };
 
-    function toggleMod(btn, mod) {
-        if(selectedMods.includes(mod)) {
-            selectedMods = selectedMods.filter(m => m !== mod);
-            btn.classList.remove('active');
-        } else {
-            selectedMods.push(mod);
-            btn.classList.add('active');
+    function setFilter(type) {
+        currentFilter = type;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        document.getElementById(`filter-${type}`).classList.add('active');
+        render();
+    }
+
+    function checkNotifications() {
+        if (!("Notification" in window)) return;
+        if (Notification.permission === "default") Notification.requestPermission();
+        if (Notification.permission === "granted") {
+            const now = new Date(); now.setHours(0,0,0,0);
+            promos.forEach(p => {
+                const dE = new Date(p.end); dE.setHours(0,0,0,0);
+                const daysLeft = Math.round((dE - now) / (1000 * 60 * 60 * 24));
+                if (daysLeft >= 0 && daysLeft <= 1) {
+                    new Notification("PROMO ALERT", { body: `Promo "${p.name}" verloopt over ${daysLeft === 0 ? 'vandaag' : '1 dag'}!`, icon: "https://cdn-icons-png.flaticon.com/512/564/564619.png" });
+                }
+            });
         }
+    }
+
+    function toggleMod(btn, mod) {
+        if(selectedMods.includes(mod)) { selectedMods = selectedMods.filter(m => m !== mod); btn.classList.remove('active'); } 
+        else { selectedMods.push(mod); btn.classList.add('active'); }
     }
 
     function handleAction() {
         const n = document.getElementById('name'), s = document.getElementById('start'), e = document.getElementById('end');
         if(!n.value || !s.value || !e.value || selectedMods.length === 0) return;
-        
         if(editId !== null) {
             const idx = promos.findIndex(p => p.id == editId);
             if(idx !== -1) promos[idx] = { ...promos[idx], name: n.value, start: s.value, end: e.value, mods: [...selectedMods] };
@@ -172,11 +161,8 @@
         } else {
             promos.push({ id: Date.now(), name: n.value, start: s.value, end: e.value, mods: [...selectedMods] });
         }
-        
-        selectedMods = [];
-        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
-        saveAndRender();
-        n.value = ''; s.value = ''; e.value = '';
+        selectedMods = []; document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+        saveAndRender(); n.value = ''; s.value = ''; e.value = '';
     }
 
     function saveAndRender() { localStorage.setItem('p_v36_final', JSON.stringify(promos)); render(); }
@@ -195,19 +181,28 @@
     function render() {
         const container = document.getElementById('list');
         container.innerHTML = '';
-        promos.sort((a,b) => new Date(a.end) - new Date(b.end));
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        let filteredPromos = promos.filter(p => {
+            if (currentFilter === 'all') return true;
+            const sD = new Date(p.start);
+            const eD = new Date(p.end);
+            return (sD.getMonth() === currentMonth && sD.getFullYear() === currentYear) || 
+                   (eD.getMonth() === currentMonth && eD.getFullYear() === currentYear);
+        });
+
+        filteredPromos.sort((a,b) => new Date(a.end) - new Date(b.end));
         
-        promos.forEach(p => {
+        filteredPromos.forEach(p => {
             const status = getStatusInfo(p.start, p.end);
             const card = document.createElement('div');
-            card.className = 'card';
-            card.style.borderLeft = `4px solid ${status.color}`;
+            card.className = 'card'; card.style.borderLeft = `4px solid ${status.color}`;
             const sDate = p.start.split('-').reverse().slice(0,2).join('/');
             const eDate = p.end.split('-').reverse().slice(0,2).join('/');
-            
             const modsToShow = Array.isArray(p.mods) ? p.mods : (p.mod ? [p.mod] : []);
             const tagsHtml = modsToShow.map(m => `<span class="tag tag-${m.toLowerCase()}">${m}</span>`).join('');
-
             card.innerHTML = `
                 <div class="card-row-top">
                     <div class="card-dates-compact">
@@ -230,8 +225,7 @@
     }
 
     function editPromo(id) {
-        const p = promos.find(x => x.id == id);
-        if(!p) return;
+        const p = promos.find(x => x.id == id); if(!p) return;
         editId = p.id;
         document.getElementById('name').value = p.name;
         document.getElementById('start').value = p.start;
@@ -239,8 +233,7 @@
         selectedMods = Array.isArray(p.mods) ? [...p.mods] : (p.mod ? [p.mod] : []);
         document.querySelectorAll('.mod-btn').forEach(btn => {
             const mod = btn.getAttribute('data-mod');
-            if(selectedMods.includes(mod)) btn.classList.add('active');
-            else btn.classList.remove('active');
+            if(selectedMods.includes(mod)) btn.classList.add('active'); else btn.classList.remove('active');
         });
         document.getElementById('save-action-btn').innerText = 'SAVE';
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -256,17 +249,14 @@
             csv += `${p.id},${p.name},${p.start},${p.end},${mods}\n`; 
         });
         const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `PROMO_BACKUP_${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `PROMO_BACKUP.csv`; a.click();
     }
 
     function triggerImport() { document.getElementById('importFile').click(); }
     
     function importCSV(e) {
-        const file = e.target.files[0];
-        if(!file) return;
+        const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
             const lines = ev.target.result.split('\n');
@@ -287,62 +277,32 @@
         if(promos.length === 0) return;
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        
-        // Background
-        doc.setFillColor(0, 0, 0);
-        doc.rect(0, 0, 210, 297, 'F');
-        
-        // Header
-        doc.setTextColor(255, 59, 48);
-        doc.setFontSize(22);
-        doc.setFont("helvetica", "bold");
+        doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
+        doc.setTextColor(255, 59, 48); doc.setFontSize(22); doc.setFont("helvetica", "bold");
         doc.text("PROMOTION STATUS REPORT", 15, 25);
-        
         let y = 45;
         promos.forEach(p => {
             const status = getStatusInfo(p.start, p.end);
             if(y > 260) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 20; }
-            
-            // Status Indicator Line (LEFT)
-            doc.setDrawColor(status.rgb[0], status.rgb[1], status.rgb[2]);
-            doc.setLineWidth(1.5);
+            doc.setDrawColor(status.rgb[0], status.rgb[1], status.rgb[2]); doc.setLineWidth(1.5);
             doc.line(15, y, 15, y + 15);
-            
-            // Name
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14);
-            doc.text(p.name, 20, y + 5);
-            
-            // Dates & Status
-            doc.setFontSize(9);
-            const sDate = p.start.split('-').reverse().join('/');
-            const eDate = p.end.split('-').reverse().join('/');
-            
-            doc.setTextColor(150, 150, 150);
-            doc.text(`${sDate}  >`, 20, y + 12);
-            doc.setTextColor(status.rgb[0], status.rgb[1], status.rgb[2]);
-            doc.text(`${eDate}`, 45, y + 12);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(14); doc.text(p.name, 20, y + 5);
+            doc.setFontSize(9); const sDate = p.start.split('-').reverse().join('/'); const eDate = p.end.split('-').reverse().join('/');
+            doc.setTextColor(150, 150, 150); doc.text(`${sDate}  >`, 20, y + 12);
+            doc.setTextColor(status.rgb[0], status.rgb[1], status.rgb[2]); doc.text(`${eDate}`, 45, y + 12);
             doc.text(status.text, 180, y + 12, { align: 'right' });
-
-            // Modality Tags (Colored Boxes)
-            let tagX = 20;
-            const mods = Array.isArray(p.mods) ? p.mods : [p.mod];
+            let tagX = 20; const mods = Array.isArray(p.mods) ? p.mods : [p.mod];
             mods.forEach(m => {
                 const color = COLORS[m] || [100, 100, 100];
-                doc.setFillColor(color[0], color[1], color[2]);
-                const textWidth = doc.getTextWidth(m);
+                doc.setFillColor(color[0], color[1], color[2]); const textWidth = doc.getTextWidth(m);
                 doc.roundedRect(tagX, y + 16, textWidth + 6, 6, 1, 1, 'F');
-                doc.setTextColor(255, 255, 255);
-                doc.setFontSize(7);
-                doc.text(m, tagX + 3, y + 20.5);
+                doc.setTextColor(255, 255, 255); doc.setFontSize(7); doc.text(m, tagX + 3, y + 20.5);
                 tagX += textWidth + 10;
             });
-            
             y += 30;
         });
-        
         const pdfBlob = doc.output('blob');
-        const fileName = `Promo_Report_v44.4.pdf`;
+        const fileName = `Promo_Report.pdf`;
         if (navigator.share) {
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
             try { await navigator.share({ files: [file], title: 'Promotion Report' }); } catch (err) { doc.save(fileName); }
@@ -350,6 +310,7 @@
     }
     
     render();
+    checkNotifications();
     setInterval(render, 60000);
 </script>
 </body>
