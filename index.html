@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMOTION TRACKER V42.0</title>
+    <title>PROMO TRACKER V43.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -19,54 +19,61 @@
             --text-dim: #888;
         }
 
-        * { box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; }
-        body { background-color: var(--bg); color: var(--text-main); margin: 0; padding: 10px; font-size: 11px; }
-        .container { max-width: 600px; margin: 0 auto; }
+        * { box-sizing: border-box; font-family: 'Arial Black', sans-serif; text-transform: uppercase; margin: 0; padding: 0; }
+        body { background-color: var(--bg); color: var(--text-main); padding: 10px; font-size: 11px; overflow-x: hidden; }
+        .container { max-width: 100%; margin: 0 auto; }
 
-        header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 15px; }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .logo-sq { background: var(--accent-red); color: white; padding: 2px 8px; font-weight: 900; font-size: 18px; border-radius: 4px; }
-        h1 { font-size: 0.9rem; margin: 0; font-style: italic; opacity: 0.9; letter-spacing: 1px; }
+        header { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+        .header-left { display: flex; align-items: center; gap: 8px; }
+        .logo-sq { background: var(--accent-red); color: white; padding: 4px 10px; font-weight: 900; font-size: 16px; border-radius: 4px; }
+        h1 { font-size: 13px; font-style: italic; letter-spacing: 1px; }
 
-        .admin-controls { display: flex; gap: 8px; }
-        .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 34px; height: 34px; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .admin-controls { display: flex; gap: 6px; }
+        .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 36px; height: 36px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .ctrl-btn svg { width: 18px; height: 18px; fill: var(--accent-blue); }
 
-        .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 20px; }
+        .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 10px; border-radius: 12px; margin-bottom: 12px; }
         .modality-selector { display: flex; gap: 4px; margin-bottom: 8px; }
-        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 2px; font-size: 9px; cursor: pointer; text-align: center; }
-        .mod-btn.active { border-color: var(--accent-orange); color: var(--accent-orange); }
+        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 2px; font-size: 8px; cursor: pointer; border-radius: 4px; }
+        .mod-btn.active { border-color: var(--accent-orange); color: var(--accent-orange); background: rgba(255, 149, 0, 0.05); }
 
-        .input-row { display: flex; gap: 6px; }
-        input[type="text"] { flex: 2; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); padding: 10px; font-size: 12px; outline: none; }
-        input[type="text"]::placeholder { color: #444; }
+        /* COMPACT INLINE INPUT ROW */
+        .input-row { display: flex; gap: 5px; align-items: center; }
+        input[type="text"] { flex: 1; min-width: 0; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); padding: 10px; font-size: 12px; border-radius: 6px; outline: none; }
         
-        .icon-box { position: relative; background: var(--panel-inner); border: 1px solid var(--border); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+        .icon-box { position: relative; width: 38px; height: 38px; background: var(--panel-inner); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; }
         .icon-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
-        .icon-box svg { width: 18px; height: 18px; pointer-events: none; }
+        .icon-box svg { width: 18px; height: 18px; }
         
-        .save-btn { flex: 1; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; clip-path: polygon(0% 0%, 90% 0%, 100% 50%, 90% 100%, 0% 100%); }
+        .save-btn { width: 45px; height: 38px; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; border-radius: 6px; cursor: pointer; font-size: 10px; flex-shrink: 0; }
 
+        /* CARD STYLING */
         .card { 
             background: var(--panel-bg); 
             margin-bottom: 6px; 
-            display: grid; 
-            grid-template-columns: 1fr 145px 85px 40px; 
-            align-items: center; 
-            padding: 12px 15px; 
-            border-radius: 4px;
+            padding: 10px; 
+            border-radius: 8px;
             border: 1px solid var(--border);
-            gap: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
-        .p-info { display: flex; flex-direction: column; overflow: hidden; }
-        .p-title { font-size: 1.1rem; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-style: italic; }
-        .p-mod-tag { font-size: 8px; color: var(--text-dim); margin-top: 2px; letter-spacing: 1px; }
-        .p-status { font-size: 9px; font-weight: 900; text-align: right; font-style: italic; }
-        .p-dates { display: flex; flex-direction: column; font-size: 9px; color: var(--text-dim); text-align: right; line-height: 1.3; }
-        .p-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-        .act-btn { background: none; border: none; cursor: pointer; padding: 2px; }
-        .act-btn svg { width: 15px; height: 15px; }
+        .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .card-dates { display: flex; flex-direction: column; gap: 1px; }
+        .date-row { font-size: 9px; display: flex; gap: 4px; align-items: center; }
+        .date-lbl { font-size: 7px; color: var(--text-dim); width: 35px; }
+        
+        .card-status-box { text-align: right; }
+        .status-badge { font-size: 8px; font-weight: 900; font-style: italic; }
+        .modality-tag { font-size: 7px; margin-top: 3px; color: var(--text-dim); border: 1px solid #333; padding: 1px 5px; border-radius: 4px; display: inline-block; }
+
+        .card-middle { border-top: 1px solid var(--border); padding-top: 6px; }
+        .p-title { font-size: 14px; color: #fff; font-style: italic; line-height: 1.2; word-break: break-word; }
+
+        .card-bottom { display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border); padding-top: 6px; }
+        .act-btn { background: none; border: none; padding: 4px; display: flex; align-items: center; gap: 4px; font-size: 9px; color: var(--text-dim); }
+        .act-btn svg { width: 14px; height: 14px; }
 
         #importFile { display: none; }
     </style>
@@ -75,10 +82,9 @@
 
 <div class="container">
     <header>
-        <div class="header-left"><div class="logo-sq">P</div><h1>PROMOTION TRACKER</h1></div>
+        <div class="header-left"><div class="logo-sq">P</div><h1>TRACKER</h1></div>
         <div class="admin-controls">
             <div class="ctrl-btn" onclick="exportPDF()"><svg viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M16,11V18H14V11H16M12,14V18H10V14H12M8,16V18H6V16H8Z"/></svg></div>
-            <div class="ctrl-btn" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M15,9H5V5H15M12,19A3,3 0 0,1 9,16A3,3 0 0,1 12,13A3,3 0 0,1 15,16A3,3 0 0,1 12,19M17,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V7L17,3Z"/></svg></div>
             <div class="ctrl-btn" onclick="triggerImport()"><svg viewBox="0 0 24 24"><path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"/></svg></div>
         </div>
     </header>
@@ -91,8 +97,14 @@
         </div>
         <div class="input-row">
             <input type="text" id="name" placeholder="PROMOTION NAME">
-            <div class="icon-box"><svg viewBox="0 0 24 24" style="fill:var(--accent-green)"><path d="M19,4H18V2H16V4H8V2H6V4H5C3.89,4 3,4.9 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8M7,12H12V17H7V12Z"/></svg><input type="date" id="start"></div>
-            <div class="icon-box"><svg viewBox="0 0 24 24" style="fill:var(--accent-red)"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6V12L16,14.5L16.7,13.2L13.5,11.3V6H12Z"/></svg><input type="date" id="end"></div>
+            <div class="icon-box" title="Start Date">
+                <svg viewBox="0 0 24 24" style="fill:var(--accent-green)"><path d="M19,4H18V2H16V4H8V2H6V4H5C3.89,4 3,4.9 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8M7,12H12V17H7V12Z"/></svg>
+                <input type="date" id="start">
+            </div>
+            <div class="icon-box" title="End Date">
+                <svg viewBox="0 0 24 24" style="fill:var(--accent-red)"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6V12L16,14.5L16.7,13.2L13.5,11.3V6H12Z"/></svg>
+                <input type="date" id="end">
+            </div>
             <button class="save-btn" id="save-action-btn" onclick="handleAction()">ADD</button>
         </div>
     </div>
@@ -108,20 +120,17 @@
 
     function setMod(btn, mod) {
         document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
-        if(btn) btn.classList.add('active');
-        else { const target = document.querySelector(`[data-mod="${mod}"]`); if(target) target.classList.add('active'); }
+        btn.classList.add('active');
         currentMod = mod;
     }
 
     function handleAction() {
         const n = document.getElementById('name'), s = document.getElementById('start'), e = document.getElementById('end');
         if(!n.value || !s.value || !e.value) return;
-
         if(editId !== null) {
             const idx = promos.findIndex(p => p.id === editId);
             if(idx !== -1) promos[idx] = { ...promos[idx], name: n.value, start: s.value, end: e.value, mod: currentMod };
-            editId = null;
-            document.getElementById('save-action-btn').innerText = 'ADD';
+            editId = null; document.getElementById('save-action-btn').innerText = 'ADD';
         } else {
             promos.push({ id: Date.now(), name: n.value, start: s.value, end: e.value, mod: currentMod });
         }
@@ -133,64 +142,44 @@
 
     function render() {
         const container = document.getElementById('list');
-        const now = new Date();
-        now.setHours(0,0,0,0);
-        const nowMs = now.getTime();
-        
+        const now = new Date(); now.setHours(0,0,0,0);
         container.innerHTML = '';
         promos.sort((a,b) => new Date(a.end) - new Date(b.end));
 
         promos.forEach(p => {
             const dS = new Date(p.start); dS.setHours(0,0,0,0);
             const dE = new Date(p.end); dE.setHours(0,0,0,0);
-            const startMs = dS.getTime();
-            const endMs = dE.getTime();
+            const daysLeft = Math.round((dE - now) / (1000 * 60 * 60 * 24));
             
-            const diffMs = endMs - nowMs;
-            const daysLeft = Math.round(diffMs / (1000 * 60 * 60 * 24));
-            
-            let statusText = "";
-            let color = 'var(--accent-green)';
-
-            if (nowMs < startMs) {
-                statusText = "UPCOMING";
-                color = 'var(--accent-blue)';
-            } else if (nowMs > endMs) {
-                statusText = "EXPIRED (REMOVE POS)";
-                color = "#444";
-            } else {
-                if (daysLeft === 0) {
-                    statusText = "LAST CHANCE (TODAY)";
-                    color = 'var(--accent-red)';
-                } else if (daysLeft === 1) {
-                    statusText = "EXPIRES TOMORROW";
-                    color = 'var(--accent-red)';
-                } else if (daysLeft <= 3) {
-                    statusText = "EXPIRING SOON";
-                    color = 'var(--accent-orange)';
-                } else {
-                    statusText = "ACTIVE";
-                    color = 'var(--accent-green)';
-                }
+            let statusText = "ACTIVE"; let color = 'var(--accent-green)';
+            if (now < dS) { statusText = "UPCOMING"; color = 'var(--accent-blue)'; }
+            else if (now > dE) { statusText = "EXPIRED"; color = "#444"; }
+            else {
+                if (daysLeft === 0) { statusText = "LAST CHANCE"; color = 'var(--accent-red)'; }
+                else if (daysLeft === 1) { statusText = "ENDS MORROW"; color = 'var(--accent-red)'; }
+                else if (daysLeft <= 3) { statusText = "EXPIRING SOON"; color = 'var(--accent-orange)'; }
             }
 
             const card = document.createElement('div');
             card.className = 'card';
-            card.style.borderLeft = `4px solid ${color}`;
-
+            card.style.borderLeft = `3px solid ${color}`;
             card.innerHTML = `
-                <div class="p-info">
+                <div class="card-top">
+                    <div class="card-dates">
+                        <div class="date-row"><span class="date-lbl">START</span> <span>${p.start.split('-').reverse().join('/')}</span></div>
+                        <div class="date-row" style="color:${color}"><span class="date-lbl" style="color:${color}">END</span> <span>${p.end.split('-').reverse().join('/')}</span></div>
+                    </div>
+                    <div class="card-status-box">
+                        <div class="status-badge" style="color:${color}">${statusText}</div>
+                        <div class="modality-tag" style="border-color:${color}44; color:${color}">${p.mod}</div>
+                    </div>
+                </div>
+                <div class="card-middle">
                     <div class="p-title">${p.name}</div>
-                    <div class="p-mod-tag">${p.mod}</div>
                 </div>
-                <div class="p-status" style="color:${color}">${statusText}</div>
-                <div class="p-dates">
-                    <span>${p.start.split('-').reverse().join('/')}</span>
-                    <span>${p.end.split('-').reverse().join('/')}</span>
-                </div>
-                <div class="p-actions">
-                    <button class="act-btn" onclick="editPromo(${p.id})"><svg viewBox="0 0 24 24" style="fill:${color}"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg></button>
-                    <button class="act-btn" onclick="del(${p.id})"><svg viewBox="0 0 24 24" style="fill:${color}"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></button>
+                <div class="card-bottom">
+                    <button class="act-btn" onclick="editPromo(${p.id})"><svg viewBox="0 0 24 24" style="fill:var(--text-dim)"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg> EDIT</button>
+                    <button class="act-btn" onclick="del(${p.id})"><svg viewBox="0 0 24 24" style="fill:var(--accent-red)"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg> DEL</button>
                 </div>`;
             container.appendChild(card);
         });
@@ -203,13 +192,12 @@
         document.getElementById('name').value = p.name;
         document.getElementById('start').value = p.start;
         document.getElementById('end').value = p.end;
-        setMod(null, p.mod);
+        setMod(document.querySelector(`[data-mod="${p.mod}"]`), p.mod);
         document.getElementById('save-action-btn').innerText = 'SAVE';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function del(id) { if(confirm('DELETE THIS PROMOTION?')) { promos = promos.filter(x => x.id !== id); saveAndRender(); } }
-    
+    function del(id) { if(confirm('DELETE?')) { promos = promos.filter(x => x.id !== id); saveAndRender(); } }
     function triggerImport() { document.getElementById('importFile').click(); }
     function importCSV(e) {
         const reader = new FileReader();
@@ -217,9 +205,7 @@
             const lines = ev.target.result.split('\n').slice(1);
             lines.forEach(line => {
                 const parts = line.split(',');
-                if(parts.length >= 5) {
-                    promos.push({ id: Date.now()+Math.random(), name: parts[1].trim(), start: parts[2].trim(), end: parts[3].trim(), mod: parts[4].trim() });
-                }
+                if(parts.length >= 5) { promos.push({ id: Date.now()+Math.random(), name: parts[1].trim(), start: parts[2].trim(), end: parts[3].trim(), mod: parts[4].trim() }); }
             });
             saveAndRender();
         };
@@ -231,23 +217,14 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("PROMOTION TRACKER REPORT", 15, 25);
+        doc.setTextColor(255, 255, 255); doc.setFontSize(22); doc.text("PROMO TRACKER REPORT", 15, 25);
         let y = 45;
         promos.forEach(p => {
-            doc.setFontSize(14); doc.setTextColor(255, 255, 255); doc.text(`${p.name}`, 15, y);
+            doc.setFontSize(14); doc.text(`${p.name}`, 15, y);
             doc.setFontSize(10); doc.setTextColor(150, 150, 150); doc.text(`${p.mod} | ${p.start} - ${p.end}`, 15, y+7);
             y += 20;
-            if(y > 270) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y=20; }
         });
-        doc.save('Promotion_Report.pdf');
-    }
-
-    function exportCSV() {
-        let csv = "ID,NAME,START,END,MODALITY\n";
-        promos.forEach(p => { csv += `${p.id},${p.name},${p.start},${p.end},${p.mod}\n`; });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob);
-        a.download = `PROMO_BACKUP.csv`; a.click();
+        doc.save('Promo_Report.pdf');
     }
     
     render();
