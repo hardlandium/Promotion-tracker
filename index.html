@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V44.1</title>
+    <title>PROMO TRACKER V44.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -14,6 +14,7 @@
             --accent-orange: #ff9500;
             --accent-green: #4cd964;
             --accent-blue: #00a3ff;
+            --accent-purple: #af52de;
             --border: #1c1c1e;
             --text-main: #ffffff;
             --text-dim: #888;
@@ -36,8 +37,11 @@
 
         .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 8px; border-radius: 10px; margin-bottom: 10px; }
         .modality-selector { display: flex; gap: 4px; margin-bottom: 8px; }
-        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 2px; font-size: 8px; cursor: pointer; border-radius: 4px; }
-        .mod-btn.active { border-color: var(--accent-orange); color: var(--accent-orange); background: rgba(255, 149, 0, 0.1); }
+        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 2px; font-size: 8px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        
+        .mod-btn[data-mod="CASHBACK"].active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(0, 163, 255, 0.1); }
+        .mod-btn[data-mod="BUNDLE"].active { border-color: var(--accent-orange); color: var(--accent-orange); background: rgba(255, 149, 0, 0.1); }
+        .mod-btn[data-mod="DISCOUNT"].active { border-color: var(--accent-purple); color: var(--accent-purple); background: rgba(175, 82, 222, 0.1); }
 
         .input-row { display: flex; gap: 4px; align-items: center; }
         input[type="text"] { flex: 1; min-width: 0; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); padding: 10px; font-size: 12px; border-radius: 6px; outline: none; }
@@ -48,7 +52,6 @@
         
         .save-btn { width: 45px; height: 38px; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; border-radius: 6px; cursor: pointer; font-size: 9px; flex-shrink: 0; }
 
-        /* REWORKED HORIZONTAL COMPACT CARD */
         .card { 
             background: var(--panel-bg); 
             margin-bottom: 6px; 
@@ -63,12 +66,12 @@
         .card-row-top { 
             display: flex; 
             justify-content: space-between; 
-            align-items: flex-end; 
+            align-items: center; 
             border-bottom: 1px solid rgba(255,255,255,0.05);
-            padding-bottom: 4px;
+            padding-bottom: 6px;
         }
 
-        .card-dates-compact { display: flex; gap: 8px; font-size: 12px; align-items: center; }
+        .card-dates-compact { display: flex; gap: 6px; font-size: 12px; align-items: center; flex-wrap: wrap; }
         .card-dates-compact .d-val { font-weight: 900; letter-spacing: 0.5px; }
         
         .status-badge { font-size: 11px; font-weight: 900; font-style: italic; letter-spacing: 0.5px; }
@@ -94,7 +97,11 @@
         .act-btn-sm { background: none; border: none; display: flex; align-items: center; cursor: pointer; }
         .act-btn-sm svg { width: 18px; height: 18px; }
 
-        .mod-label { font-size: 7px; color: var(--text-dim); margin-left: 4px; border: 1px solid #222; padding: 1px 4px; border-radius: 3px; }
+        .mod-tags-container { display: flex; gap: 3px; }
+        .tag { font-size: 7px; padding: 2px 5px; border-radius: 3px; font-weight: 900; color: #fff; }
+        .tag-cashback { background: var(--accent-blue); }
+        .tag-bundle { background: var(--accent-orange); }
+        .tag-discount { background: var(--accent-purple); }
 
         #importFile { display: none; }
     </style>
@@ -113,9 +120,9 @@
 
     <div class="input-panel">
         <div class="modality-selector">
-            <div class="mod-btn active" data-mod="CASHBACK" onclick="setMod(this, 'CASHBACK')">CASHBACK</div>
-            <div class="mod-btn" data-mod="BUNDLE" onclick="setMod(this, 'BUNDLE')">BUNDLE</div>
-            <div class="mod-btn" data-mod="DISCOUNT" onclick="setMod(this, 'DISCOUNT')">DISCOUNT</div>
+            <div class="mod-btn" data-mod="CASHBACK" onclick="toggleMod(this, 'CASHBACK')">CASHBACK</div>
+            <div class="mod-btn" data-mod="BUNDLE" onclick="toggleMod(this, 'BUNDLE')">BUNDLE</div>
+            <div class="mod-btn" data-mod="DISCOUNT" onclick="toggleMod(this, 'DISCOUNT')">DISCOUNT</div>
         </div>
         <div class="input-row">
             <input type="text" id="name" placeholder="PROMOTION NAME">
@@ -125,32 +132,49 @@
         </div>
     </div>
     
-    <input type="file" id="importFile" accept=".csv" onchange="importCSV(event)">
+    <input type="file" id="importFile" accept=".csv, text/csv, text/plain, .txt" onchange="importCSV(event)">
     <div id="list"></div>
 </div>
 
 <script>
     let promos = JSON.parse(localStorage.getItem('p_v36_final')) || [];
-    let currentMod = 'CASHBACK';
+    let selectedMods = [];
     let editId = null;
 
-    function setMod(btn, mod) {
-        if(!btn) return;
-        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentMod = mod;
+    const COLORS = {
+        CASHBACK: [0, 163, 255],
+        BUNDLE: [255, 149, 0],
+        DISCOUNT: [175, 82, 222],
+        ACTIVE: [76, 217, 100],
+        UPCOMING: [0, 163, 255],
+        EXPIRED: [68, 68, 68],
+        EXPIRING: [255, 59, 48]
+    };
+
+    function toggleMod(btn, mod) {
+        if(selectedMods.includes(mod)) {
+            selectedMods = selectedMods.filter(m => m !== mod);
+            btn.classList.remove('active');
+        } else {
+            selectedMods.push(mod);
+            btn.classList.add('active');
+        }
     }
 
     function handleAction() {
         const n = document.getElementById('name'), s = document.getElementById('start'), e = document.getElementById('end');
-        if(!n.value || !s.value || !e.value) return;
+        if(!n.value || !s.value || !e.value || selectedMods.length === 0) return;
+        
         if(editId !== null) {
             const idx = promos.findIndex(p => p.id == editId);
-            if(idx !== -1) promos[idx] = { ...promos[idx], name: n.value, start: s.value, end: e.value, mod: currentMod };
+            if(idx !== -1) promos[idx] = { ...promos[idx], name: n.value, start: s.value, end: e.value, mods: [...selectedMods] };
             editId = null; document.getElementById('save-action-btn').innerText = 'ADD';
         } else {
-            promos.push({ id: Date.now(), name: n.value, start: s.value, end: e.value, mod: currentMod });
+            promos.push({ id: Date.now(), name: n.value, start: s.value, end: e.value, mods: [...selectedMods] });
         }
+        
+        selectedMods = [];
+        document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
         saveAndRender();
         n.value = ''; s.value = ''; e.value = '';
     }
@@ -162,18 +186,17 @@
         const dS = new Date(startStr); dS.setHours(0,0,0,0);
         const dE = new Date(endStr); dE.setHours(0,0,0,0);
         const daysLeft = Math.round((dE - now) / (1000 * 60 * 60 * 24));
-        if (now < dS) return { text: "UPCOMING", color: '#00a3ff' };
-        if (now > dE) return { text: "EXPIRED", color: '#444' };
-        if (daysLeft === 0) return { text: "LAST CHANCE", color: '#ff3b30' };
-        if (daysLeft === 1) return { text: "ENDS MORROW", color: '#ff3b30' };
-        if (daysLeft <= 3) return { text: "EXPIRING SOON", color: '#ff9500' };
-        return { text: "ACTIVE", color: '#4cd964' };
+        if (now < dS) return { text: "UPCOMING", color: '#00a3ff', rgb: COLORS.UPCOMING };
+        if (now > dE) return { text: "EXPIRED", color: '#444', rgb: COLORS.EXPIRED };
+        if (daysLeft <= 3) return { text: "EXPIRING", color: '#ff3b30', rgb: COLORS.EXPIRING };
+        return { text: "ACTIVE", color: '#4cd964', rgb: COLORS.ACTIVE };
     }
 
     function render() {
         const container = document.getElementById('list');
         container.innerHTML = '';
         promos.sort((a,b) => new Date(a.end) - new Date(b.end));
+        
         promos.forEach(p => {
             const status = getStatusInfo(p.start, p.end);
             const card = document.createElement('div');
@@ -182,13 +205,16 @@
             const sDate = p.start.split('-').reverse().slice(0,2).join('/');
             const eDate = p.end.split('-').reverse().slice(0,2).join('/');
             
+            const modsToShow = Array.isArray(p.mods) ? p.mods : (p.mod ? [p.mod] : []);
+            const tagsHtml = modsToShow.map(m => `<span class="tag tag-${m.toLowerCase()}">${m}</span>`).join('');
+
             card.innerHTML = `
                 <div class="card-row-top">
                     <div class="card-dates-compact">
                         <span class="d-val" style="color:var(--text-dim); opacity:0.8;">${sDate}</span>
                         <span style="opacity:0.2;">></span>
                         <span class="d-val" style="color:${status.color}">${eDate}</span>
-                        <span class="mod-label">${p.mod}</span>
+                        <div class="mod-tags-container">${tagsHtml}</div>
                     </div>
                     <div class="status-badge" style="color:${status.color}">${status.text}</div>
                 </div>
@@ -210,7 +236,12 @@
         document.getElementById('name').value = p.name;
         document.getElementById('start').value = p.start;
         document.getElementById('end').value = p.end;
-        setMod(document.querySelector(`[data-mod="${p.mod}"]`), p.mod);
+        selectedMods = Array.isArray(p.mods) ? [...p.mods] : (p.mod ? [p.mod] : []);
+        document.querySelectorAll('.mod-btn').forEach(btn => {
+            const mod = btn.getAttribute('data-mod');
+            if(selectedMods.includes(mod)) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
         document.getElementById('save-action-btn').innerText = 'SAVE';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -219,8 +250,11 @@
     
     function exportCSV() {
         if(promos.length === 0) return;
-        let csv = "ID,NAME,START,END,MODALITY\n";
-        promos.forEach(p => { csv += `${p.id},${p.name},${p.start},${p.end},${p.mod}\n`; });
+        let csv = "ID,NAME,START,END,MODALITIES\n";
+        promos.forEach(p => { 
+            const mods = Array.isArray(p.mods) ? p.mods.join('|') : (p.mod || "");
+            csv += `${p.id},${p.name},${p.start},${p.end},${mods}\n`; 
+        });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -231,39 +265,85 @@
     function triggerImport() { document.getElementById('importFile').click(); }
     
     function importCSV(e) {
+        const file = e.target.files[0];
+        if(!file) return;
         const reader = new FileReader();
         reader.onload = function(ev) {
             const lines = ev.target.result.split('\n');
             const newPromos = [];
             for(let i = 1; i < lines.length; i++) {
                 const parts = lines[i].split(',');
-                if(parts.length >= 5) { newPromos.push({ id: parts[0].trim(), name: parts[1].trim(), start: parts[2].trim(), end: parts[3].trim(), mod: parts[4].trim() }); }
+                if(parts.length >= 5) { 
+                    const mods = parts[4].trim().split('|');
+                    newPromos.push({ id: parts[0].trim(), name: parts[1].trim(), start: parts[2].trim(), end: parts[3].trim(), mods: mods }); 
+                }
             }
             if(newPromos.length > 0 && confirm(`Import ${newPromos.length} promos?`)) { promos = newPromos; saveAndRender(); }
         };
-        reader.readAsText(e.target.files[0]);
+        reader.readAsText(file);
     }
 
     async function sharePDF() {
         if(promos.length === 0) return;
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-        doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
-        doc.setTextColor(255, 59, 48); doc.setFontSize(24); doc.setFont("helvetica", "bold");
-        doc.text("PROMOTION REPORT", 15, 25);
+        
+        // Background
+        doc.setFillColor(0, 0, 0);
+        doc.rect(0, 0, 210, 297, 'F');
+        
+        // Header
+        doc.setTextColor(255, 59, 48);
+        doc.setFontSize(22);
+        doc.setFont("helvetica", "bold");
+        doc.text("PROMOTION STATUS REPORT", 15, 25);
+        
         let y = 45;
         promos.forEach(p => {
             const status = getStatusInfo(p.start, p.end);
-            if(y > 270) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 20; }
-            doc.setDrawColor(status.color); doc.line(15, y, 15, y + 10);
-            doc.setTextColor(255, 255, 255); doc.setFontSize(12); doc.text(p.name, 20, y + 5);
-            doc.setFontSize(8); doc.setTextColor(136, 136, 136);
-            doc.text(`${p.mod} | ${p.start.split('-').reverse().join('/')} > ${p.end.split('-').reverse().join('/')} | ${status.text}`, 20, y + 10);
-            y += 18;
+            if(y > 260) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 20; }
+            
+            // Status Indicator Line (LEFT)
+            doc.setDrawColor(status.rgb[0], status.rgb[1], status.rgb[2]);
+            doc.setLineWidth(1.5);
+            doc.line(15, y, 15, y + 15);
+            
+            // Name
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.text(p.name, 20, y + 5);
+            
+            // Dates & Status
+            doc.setFontSize(9);
+            const sDate = p.start.split('-').reverse().join('/');
+            const eDate = p.end.split('-').reverse().join('/');
+            
+            doc.setTextColor(150, 150, 150);
+            doc.text(`${sDate}  >`, 20, y + 12);
+            doc.setTextColor(status.rgb[0], status.rgb[1], status.rgb[2]);
+            doc.text(`${eDate}`, 45, y + 12);
+            doc.text(status.text, 180, y + 12, { align: 'right' });
+
+            // Modality Tags (Colored Boxes)
+            let tagX = 20;
+            const mods = Array.isArray(p.mods) ? p.mods : [p.mod];
+            mods.forEach(m => {
+                const color = COLORS[m] || [100, 100, 100];
+                doc.setFillColor(color[0], color[1], color[2]);
+                const textWidth = doc.getTextWidth(m);
+                doc.roundedRect(tagX, y + 16, textWidth + 6, 6, 1, 1, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(7);
+                doc.text(m, tagX + 3, y + 20.5);
+                tagX += textWidth + 10;
+            });
+            
+            y += 30;
         });
+        
         const pdfBlob = doc.output('blob');
-        const fileName = `Promo_Report.pdf`;
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([pdfBlob], fileName, { type: 'application/pdf' })] })) {
+        const fileName = `Promo_Report_v44.4.pdf`;
+        if (navigator.share) {
             const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
             try { await navigator.share({ files: [file], title: 'Promotion Report' }); } catch (err) { doc.save(fileName); }
         } else { doc.save(fileName); }
