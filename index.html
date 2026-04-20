@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V44.7</title>
+    <title>PROMO TRACKER V45.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -27,79 +27,63 @@
 
         header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
         .header-left { display: flex; align-items: center; gap: 8px; }
-        .logo-sq { background: var(--accent-red); color: white; padding: 4px 10px; font-weight: 900; font-size: 16px; border-radius: 4px; }
+        .logo-sq { background: var(--accent-red); color: white; padding: 4px 10px; font-weight: 900; font-size: 16px; border-radius: 4px; box-shadow: 0 0 10px rgba(255,59,48,0.4); }
         h1 { font-size: 13px; font-style: italic; letter-spacing: 1px; }
 
-        .admin-controls { display: flex; gap: 4px; }
-        .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .ctrl-btn svg { width: 18px; height: 18px; }
-        .btn-share svg { fill: var(--accent-blue); }
+        .admin-controls { display: flex; gap: 6px; }
+        .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .ctrl-btn:active { transform: scale(0.9); }
+        .btn-share { border-color: var(--accent-blue); box-shadow: 0 0 8px rgba(0,163,255,0.2); }
 
         .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 8px; border-radius: 10px; margin-bottom: 10px; }
         .modality-selector { display: flex; gap: 4px; margin-bottom: 8px; }
-        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 2px; font-size: 8px; cursor: pointer; border-radius: 4px; transition: 0.2s; }
+        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 8px 2px; font-size: 8px; cursor: pointer; border-radius: 4px; }
         
-        .mod-btn[data-mod="CASHBACK"].active { border-color: var(--accent-blue); color: var(--accent-blue); background: rgba(0, 163, 255, 0.1); }
-        .mod-btn[data-mod="BUNDLE"].active { border-color: var(--accent-orange); color: var(--accent-orange); background: rgba(255, 149, 0, 0.1); }
-        .mod-btn[data-mod="DISCOUNT"].active { border-color: var(--accent-purple); color: var(--accent-purple); background: rgba(175, 82, 222, 0.1); }
+        .mod-btn.active[data-mod="CASHBACK"] { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 0 8px rgba(0,163,255,0.3); }
+        .mod-btn.active[data-mod="BUNDLE"] { border-color: var(--accent-orange); color: var(--accent-orange); box-shadow: 0 0 8px rgba(255,149,0,0.3); }
+        .mod-btn.active[data-mod="DISCOUNT"] { border-color: var(--accent-purple); color: var(--accent-purple); box-shadow: 0 0 8px rgba(175,82,222,0.3); }
 
         .input-row { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
-        .input-row:last-child { margin-bottom: 0; }
-        input[type="text"], input[type="date"] { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; outline: none; padding: 10px; font-size: 12px; }
+        input { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; padding: 10px; font-size: 12px; outline: none; }
         .name-input { flex: 2; }
-        .url-input { flex: 1; border-color: #333; color: var(--accent-blue); text-transform: none; }
-        
-        .icon-box { position: relative; width: 38px; height: 38px; background: var(--panel-inner); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; }
+        .url-input { flex: 1; border-color: #333; color: var(--accent-blue); text-transform: none; font-size: 10px; }
+        .search-input { flex: 1; border-color: #333; height: 38px; }
+
+        .icon-box { position: relative; width: 38px; height: 38px; background: var(--panel-inner); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; border-radius: 6px; }
         .icon-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
-        .icon-box svg { width: 18px; height: 18px; }
-        
-        .save-btn { width: 45px; height: 38px; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; border-radius: 6px; cursor: pointer; font-size: 9px; flex-shrink: 0; }
+        .save-btn { width: 50px; height: 38px; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; border-radius: 6px; cursor: pointer; }
 
-        .filter-bar { display: flex; gap: 6px; margin-bottom: 10px; padding: 0 4px; }
-        .filter-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 12px; border-radius: 20px; font-size: 9px; cursor: pointer; }
-        .filter-chip.active { background: var(--text-main); color: #000; border-color: var(--text-main); }
+        .card { background: var(--panel-bg); margin-bottom: 6px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); border-left: 4px solid #333; }
+        .card-row-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .p-title-compact { font-size: 15px; color: #fff; font-style: italic; cursor: pointer; text-decoration: underline rgba(255,255,255,0.1); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .card { background: var(--panel-bg); margin-bottom: 6px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
-        .card-row-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; }
-        .card-dates-compact { display: flex; gap: 6px; font-size: 12px; align-items: center; flex-wrap: wrap; }
-        .status-badge { font-size: 11px; font-weight: 900; font-style: italic; }
-        .card-row-bottom { display: flex; justify-content: space-between; align-items: center; }
-        
-        .p-title-compact { font-size: 15px; color: #fff; font-style: italic; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; cursor: pointer; text-decoration: underline rgba(255,255,255,0.1); }
-        .p-title-compact:active { color: var(--accent-blue); }
+        .tag-container { display: flex; gap: 5px; margin-left: 8px; }
+        .tag { font-size: 7px; padding: 1px 6px; border-radius: 10px; font-weight: 900; background: transparent; border: 1px solid transparent; }
+        .tag-cashback { border-color: var(--accent-blue); color: var(--accent-blue); box-shadow: 0 0 5px rgba(0,163,255,0.3); }
+        .tag-bundle { border-color: var(--accent-orange); color: var(--accent-orange); box-shadow: 0 0 5px rgba(255,149,0,0.3); }
+        .tag-discount { border-color: var(--accent-purple); color: var(--accent-purple); box-shadow: 0 0 5px rgba(175,82,222,0.3); }
 
-        .act-btn-sm { background: none; border: none; display: flex; align-items: center; cursor: pointer; }
-        .act-btn-sm svg { width: 18px; height: 18px; }
-
-        /* QR Overlay */
-        #qr-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-        #qr-container { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 30px; }
-        #qr-title { margin-bottom: 15px; font-size: 18px; text-align: center; }
-        .close-qr { background: var(--accent-red); color: #fff; padding: 15px 40px; border-radius: 30px; font-weight: 900; cursor: pointer; }
-
-        .mod-tags-container { display: flex; gap: 3px; }
-        .tag { font-size: 7px; padding: 2px 5px; border-radius: 3px; font-weight: 900; color: #fff; }
-        .tag-cashback { background: var(--accent-blue); }
-        .tag-bundle { background: var(--accent-orange); }
-        .tag-discount { background: var(--accent-purple); }
-
+        #qr-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
+        #qr-container { background: #fff; padding: 20px; border-radius: 12px; }
         #importFile { display: none; }
     </style>
 </head>
 <body>
 
 <div id="qr-overlay">
-    <div id="qr-title"></div>
+    <div id="qr-title" style="margin-bottom:20px; font-size:18px; text-align:center;"></div>
     <div id="qr-container"></div>
-    <div class="close-qr" onclick="closeQR()">CLOSE</div>
+    <div onclick="closeQR()" style="margin-top:30px; background:var(--accent-red); padding:15px 40px; border-radius:30px; font-weight:900;">CLOSE</div>
 </div>
 
 <div class="container">
     <header>
         <div class="header-left"><div class="logo-sq">P</div><h1>TRACKER</h1></div>
         <div class="admin-controls">
-            <div class="ctrl-btn btn-share" onclick="sharePDF()"><svg viewBox="0 0 24 24"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"/></svg></div>
-            <div class="ctrl-btn" onclick="exportCSV()" style="background:none;"><svg style="fill:var(--text-dim)" viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg></div>
+            <div class="ctrl-btn btn-share" onclick="handleFullShare()"><svg viewBox="0 0 24 24" style="fill:var(--accent-blue); width:20px;"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"/></svg></div>
+            <div class="ctrl-btn" onclick="exportCSV()"><svg style="fill:var(--text-dim)" viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg></div>
+            <div class="ctrl-btn" onclick="triggerImport()"><svg style="fill:var(--accent-green)" viewBox="0 0 24 24"><path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"/></svg></div>
+            <input type="file" id="importFile" accept=".csv" onchange="importCSV(event)">
         </div>
     </header>
 
@@ -111,21 +95,16 @@
         </div>
         <div class="input-row">
             <input type="text" id="name" class="name-input" placeholder="PROMOTION NAME">
-            <input type="text" id="url" class="url-input" placeholder="PASTE URL HERE">
+            <input type="text" id="url" class="url-input" placeholder="URL (OPTIONAL)">
         </div>
         <div class="input-row">
-            <div class="icon-box"><svg viewBox="0 0 24 24" style="fill:var(--accent-green)"><path d="M19,4H18V2H16V4H8V2H6V4H5C3.89,4 3,4.9 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8M7,12H12V17H7V12Z"/></svg><input type="date" id="start"></div>
-            <div class="icon-box" style="margin-left:4px;"><svg viewBox="0 0 24 24" style="fill:var(--accent-red)"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6V12L16,14.5L16.7,13.2L13.5,11.3V6H12Z"/></svg><input type="date" id="end"></div>
-            <div style="flex:1"></div>
+            <input type="text" id="search" class="search-input" placeholder="SEARCH PROMOS..." oninput="render()">
+            <div class="icon-box"><svg viewBox="0 0 24 24" style="width:18px; fill:var(--accent-green)"><path d="M19,4H18V2H16V4H8V2H6V4H5C3.89,4 3,4.9 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8M7,12H12V17H7V12Z"/></svg><input type="date" id="start"></div>
+            <div class="icon-box"><svg viewBox="0 0 24 24" style="width:18px; fill:var(--accent-red)"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6V12L16,14.5L16.7,13.2L13.5,11.3V6H12Z"/></svg><input type="date" id="end"></div>
             <button class="save-btn" id="save-action-btn" onclick="handleAction()">ADD</button>
         </div>
     </div>
 
-    <div class="filter-bar">
-        <button class="filter-chip active" id="filter-all" onclick="setFilter('all')">ALL</button>
-        <button class="filter-chip" id="filter-month" onclick="setFilter('month')">THIS MONTH</button>
-    </div>
-    
     <div id="list"></div>
 </div>
 
@@ -133,180 +112,172 @@
     let promos = JSON.parse(localStorage.getItem('p_v36_final')) || [];
     let selectedMods = [];
     let editId = null;
-    let currentFilter = 'all';
-    let qrcode = null;
 
-    const COLORS = {
-        CASHBACK: [0, 163, 255], BUNDLE: [255, 149, 0], DISCOUNT: [175, 82, 222],
-        ACTIVE: [76, 217, 100], UPCOMING: [0, 163, 255], EXPIRED: [68, 68, 68], EXPIRING: [255, 59, 48]
+    const COLORS = { 
+        ACTIVE: [76, 217, 100], 
+        UPCOMING: [0, 163, 255], 
+        EXPIRED: [68, 68, 68], 
+        EXPIRING: [255, 59, 48], 
+        TAGS: { CASHBACK: [0, 163, 255], BUNDLE: [255, 149, 0], DISCOUNT: [175, 82, 222] } 
     };
 
-    function showQR(name, url) {
-        if(!url) { alert("GEEN URL BESCHIKBAAR VOOR DEZE PROMO"); return; }
-        const overlay = document.getElementById('qr-overlay');
-        const container = document.getElementById('qr-container');
-        document.getElementById('qr-title').innerText = name;
-        container.innerHTML = "";
-        overlay.style.display = 'flex';
-        qrcode = new QRCode(container, { text: url, width: 256, height: 256, colorDark : "#000000", colorLight : "#ffffff" });
+    function getStatusData(start, end) {
+        const now = new Date().setHours(0,0,0,0);
+        const dS = new Date(start).setHours(0,0,0,0);
+        const dE = new Date(end).setHours(0,0,0,0);
+        if (now < dS) return { text: "UPCOMING", color: COLORS.UPCOMING };
+        if (now > dE) return { text: "EXPIRED", color: COLORS.EXPIRED };
+        if ((dE - now) <= 259200000) return { text: "EXPIRING", color: COLORS.EXPIRING };
+        return { text: "ACTIVE", color: COLORS.ACTIVE };
     }
 
-    function closeQR() { document.getElementById('qr-overlay').style.display = 'none'; }
+    function triggerImport() { document.getElementById('importFile').click(); }
 
-    function setFilter(type) {
-        currentFilter = type;
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        document.getElementById(`filter-${type}`).classList.add('active');
-        render();
+    function importCSV(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const lines = ev.target.result.split('\n');
+            const newPromos = [];
+            for(let i = 1; i < lines.length; i++) {
+                if(!lines[i].trim()) continue;
+                const p = lines[i].split(',');
+                if(p.length >= 6) {
+                    newPromos.push({ 
+                        id: p[0] || Date.now() + i, 
+                        name: p[1], 
+                        url: p[2], 
+                        start: p[3], 
+                        end: p[4], 
+                        mods: p[5].replace('\r', '').split('|') 
+                    });
+                }
+            }
+            if(newPromos.length > 0) { promos = newPromos; save(); }
+        };
+        reader.readAsText(file);
     }
 
-    function toggleMod(btn, mod) {
-        if(selectedMods.includes(mod)) { selectedMods = selectedMods.filter(m => m !== mod); btn.classList.remove('active'); } 
-        else { selectedMods.push(mod); btn.classList.add('active'); }
-    }
+    async function handleFullShare() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFillColor(0, 0, 0);
+        doc.rect(0, 0, 210, 297, 'F');
+        doc.setFillColor(255, 59, 48);
+        doc.roundedRect(15, 15, 10, 10, 2, 2, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("P", 18, 22.5);
+        doc.setFontSize(12);
+        doc.text("TRACKER REPORT", 30, 22);
+        doc.setDrawColor(28, 28, 30);
+        doc.line(15, 30, 195, 30);
 
-    function handleAction() {
-        const n = document.getElementById('name'), u = document.getElementById('url'), s = document.getElementById('start'), e = document.getElementById('end');
-        if(!n.value || !s.value || !e.value || selectedMods.length === 0) return;
-        
-        const promoData = { name: n.value, url: u.value, start: s.value, end: e.value, mods: [...selectedMods] };
+        let y = 45;
+        promos.sort((a,b) => new Date(a.end) - new Date(b.end)).forEach((p) => {
+            if (y > 260) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 25; }
+            const stat = getStatusData(p.start, p.end);
+            doc.setFillColor(stat.color[0], stat.color[1], stat.color[2]);
+            doc.rect(15, y, 2, 20, 'F');
+            doc.setFontSize(8); doc.setTextColor(136, 136, 136);
+            doc.text(`${p.start.split('-').reverse().join('/')} > `, 20, y + 5);
+            doc.setTextColor(stat.color[0], stat.color[1], stat.color[2]);
+            doc.text(`${p.end.split('-').reverse().join('/')}`, 42, y + 5);
+            doc.setFontSize(9); doc.text(stat.text, 170, y + 5, { align: 'right' });
+            doc.setTextColor(255, 255, 255); doc.setFontSize(13); doc.setFont("helvetica", "bolditalic");
+            doc.text(p.name, 20, y + 14);
+            let tx = 20;
+            p.mods.forEach(m => {
+                const tc = COLORS.TAGS[m] || [255,255,255];
+                doc.setDrawColor(tc[0], tc[1], tc[2]); doc.roundedRect(tx, y + 17, 18, 4, 1, 1, 'D');
+                doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.setTextColor(tc[0], tc[1], tc[2]);
+                doc.text(m, tx + 9, y + 20, { align: 'center' }); tx += 22;
+            });
+            y += 30;
+        });
 
-        if(editId !== null) {
-            const idx = promos.findIndex(p => p.id == editId);
-            if(idx !== -1) promos[idx] = { ...promos[idx], ...promoData };
-            editId = null; document.getElementById('save-action-btn').innerText = 'ADD';
-        } else {
-            promos.push({ id: Date.now(), ...promoData });
-        }
-        
-        selectedMods = []; document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
-        saveAndRender(); 
-        n.value = ''; u.value = ''; s.value = ''; e.value = '';
-    }
-
-    function saveAndRender() { localStorage.setItem('p_v36_final', JSON.stringify(promos)); render(); }
-
-    function getStatusInfo(startStr, endStr) {
-        const now = new Date(); now.setHours(0,0,0,0);
-        const dS = new Date(startStr); dS.setHours(0,0,0,0);
-        const dE = new Date(endStr); dE.setHours(0,0,0,0);
-        const daysLeft = Math.round((dE - now) / (1000 * 60 * 60 * 24));
-        if (now < dS) return { text: "UPCOMING", color: '#00a3ff', rgb: COLORS.UPCOMING };
-        if (now > dE) return { text: "EXPIRED", color: '#444', rgb: COLORS.EXPIRED };
-        if (daysLeft <= 3) return { text: "EXPIRING", color: '#ff3b30', rgb: COLORS.EXPIRING };
-        return { text: "ACTIVE", color: '#4cd964', rgb: COLORS.ACTIVE };
+        const pdfBlob = doc.output('blob');
+        const file = new File([pdfBlob], "Promo_Report.pdf", { type: "application/pdf" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try { await navigator.share({ files: [file], title: 'Promo Report' }); } catch (err) { doc.save("Promo_Report.pdf"); }
+        } else { doc.save("Promo_Report.pdf"); }
     }
 
     function render() {
         const container = document.getElementById('list');
+        const q = document.getElementById('search').value.toLowerCase();
         container.innerHTML = '';
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
-
-        let filteredPromos = promos.filter(p => {
-            if (currentFilter === 'all') return true;
-            const eD = new Date(p.end);
-            return (eD.getMonth() === currentMonth && eD.getFullYear() === currentYear);
-        });
-
-        filteredPromos.sort((a,b) => new Date(a.end) - new Date(b.end));
-        
-        filteredPromos.forEach(p => {
-            const status = getStatusInfo(p.start, p.end);
+        promos.filter(p => p.name.toLowerCase().includes(q))
+        .sort((a,b) => new Date(a.end) - new Date(b.end))
+        .forEach(p => {
+            const stat = getStatusData(p.start, p.end);
             const card = document.createElement('div');
-            card.className = 'card'; card.style.borderLeft = `4px solid ${status.color}`;
-            const sDate = p.start.split('-').reverse().slice(0,2).join('/');
-            const eDate = p.end.split('-').reverse().slice(0,2).join('/');
-            const modsToShow = Array.isArray(p.mods) ? p.mods : [p.mod];
-            const tagsHtml = modsToShow.map(m => `<span class="tag tag-${m.toLowerCase()}">${m}</span>`).join('');
-            
+            card.className = 'card'; card.style.borderLeftColor = `rgb(${stat.color.join(',')})`;
+            const tags = p.mods.map(m => `<span class="tag tag-${m.toLowerCase()}">${m}</span>`).join('');
             card.innerHTML = `
                 <div class="card-row-top">
-                    <div class="card-dates-compact">
-                        <span class="d-val" style="color:var(--text-dim); opacity:0.8;">${sDate}</span>
-                        <span style="opacity:0.2;">></span>
-                        <span class="d-val" style="color:${status.color}">${eDate}</span>
-                        <div class="mod-tags-container">${tagsHtml}</div>
+                    <div style="display:flex; align-items:center;">
+                        <span style="color:var(--text-dim)">${p.start.split('-').reverse().slice(0,2).join('/')} > <span style="color:rgb(${stat.color.join(',')})">${p.end.split('-').reverse().slice(0,2).join('/')}</span></span>
+                        <div class="tag-container">${tags}</div>
                     </div>
-                    <div class="status-badge" style="color:${status.color}">${status.text}</div>
+                    <div style="color:rgb(${stat.color.join(',')}); font-weight:900;">${stat.text}</div>
                 </div>
-                <div class="card-row-bottom">
-                    <div class="p-title-compact" onclick="showQR('${p.name}', '${p.url || ''}')">${p.name}</div>
-                    <div class="card-actions-compact">
-                        <div class="act-btn-sm" onclick="editPromo(${p.id})"><svg viewBox="0 0 24 24" style="fill:var(--text-dim)"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg></div>
-                        <div class="act-btn-sm" onclick="del(${p.id})"><svg viewBox="0 0 24 24" style="fill:var(--accent-red); opacity:0.8;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></div>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="p-title-compact" onclick="showQR('${p.name}', '${p.url||''}')">${p.name}</div>
+                    <div style="display:flex; gap:15px;">
+                        <div onclick="editPromo(${p.id})"><svg viewBox="0 0 24 24" style="width:16px; fill:var(--text-dim)"><path d="M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg></div>
+                        <div onclick="del(${p.id})"><svg viewBox="0 0 24 24" style="width:16px; fill:var(--accent-red)"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></div>
                     </div>
                 </div>`;
             container.appendChild(card);
         });
     }
 
+    function toggleMod(btn, mod) {
+        if(selectedMods.includes(mod)) selectedMods = selectedMods.filter(m => m !== mod);
+        else selectedMods.push(mod);
+        btn.classList.toggle('active');
+    }
+
+    function handleAction() {
+        const n = document.getElementById('name'), s = document.getElementById('start'), e = document.getElementById('end'), u = document.getElementById('url');
+        if(!n.value || !s.value || !e.value || selectedMods.length === 0) return;
+        const data = { name: n.value, url: u.value, start: s.value, end: e.value, mods: [...selectedMods] };
+        if(editId) {
+            promos = promos.map(x => x.id == editId ? { ...x, ...data } : x);
+            editId = null; document.getElementById('save-action-btn').innerText = 'ADD';
+        } else { promos.push({ id: Date.now(), ...data }); }
+        n.value = s.value = e.value = u.value = '';
+        selectedMods = []; document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+        save();
+    }
+
     function editPromo(id) {
-        const p = promos.find(x => x.id == id); if(!p) return;
-        editId = p.id;
+        const p = promos.find(x => x.id == id); editId = p.id;
         document.getElementById('name').value = p.name;
-        document.getElementById('url').value = p.url || '';
         document.getElementById('start').value = p.start;
         document.getElementById('end').value = p.end;
-        selectedMods = Array.isArray(p.mods) ? [...p.mods] : [p.mod];
-        document.querySelectorAll('.mod-btn').forEach(btn => {
-            const mod = btn.getAttribute('data-mod');
-            if(selectedMods.includes(mod)) btn.classList.add('active'); else btn.classList.remove('active');
-        });
+        document.getElementById('url').value = p.url || '';
+        selectedMods = [...p.mods];
+        document.querySelectorAll('.mod-btn').forEach(b => b.classList.toggle('active', selectedMods.includes(b.dataset.mod)));
         document.getElementById('save-action-btn').innerText = 'SAVE';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo(0,0);
     }
 
-    function del(id) { if(confirm('DELETE?')) { promos = promos.filter(x => x.id != id); saveAndRender(); } }
-    
+    function save() { localStorage.setItem('p_v36_final', JSON.stringify(promos)); render(); }
+    function del(id) { if(confirm('DELETE?')) { promos = promos.filter(x => x.id != id); save(); } }
     function exportCSV() {
-        let csv = "ID,NAME,URL,START,END,MODALITIES\n";
-        promos.forEach(p => { 
-            const mods = Array.isArray(p.mods) ? p.mods.join('|') : p.mod;
-            csv += `${p.id},${p.name},${p.url || ''},${p.start},${p.end},${mods}\n`; 
-        });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-        a.download = `PROMO_BACKUP.csv`; a.click();
+        let csv = "ID,NAME,URL,START,END,MODS\n";
+        promos.forEach(p => csv += `${p.id},${p.name},${p.url},${p.start},${p.end},${p.mods.join('|')}\n`);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+        a.download = 'backup.csv'; a.click();
     }
+    function showQR(n, u) { if(!u) return; document.getElementById('qr-title').innerText = n; document.getElementById('qr-container').innerHTML = ""; new QRCode(document.getElementById('qr-container'), u); document.getElementById('qr-overlay').style.display='flex'; }
+    function closeQR() { document.getElementById('qr-overlay').style.display='none'; }
 
-    async function sharePDF() {
-        if(promos.length === 0) return;
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
-        doc.setTextColor(255, 59, 48); doc.setFontSize(22); doc.setFont("helvetica", "bold");
-        doc.text("PROMOTION STATUS REPORT", 15, 25);
-        let y = 45;
-        promos.forEach(p => {
-            const status = getStatusInfo(p.start, p.end);
-            if(y > 260) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 20; }
-            doc.setDrawColor(status.rgb[0], status.rgb[1], status.rgb[2]); doc.setLineWidth(1.5);
-            doc.line(15, y, 15, y + 15);
-            doc.setTextColor(255, 255, 255); doc.setFontSize(14); doc.text(p.name, 20, y + 5);
-            doc.setFontSize(9); const sDate = p.start.split('-').reverse().join('/'); const eDate = p.end.split('-').reverse().join('/');
-            doc.setTextColor(150, 150, 150); doc.text(`${sDate}  >`, 20, y + 12);
-            doc.setTextColor(status.rgb[0], status.rgb[1], status.rgb[2]); doc.text(`${eDate}`, 45, y + 12);
-            doc.text(status.text, 180, y + 12, { align: 'right' });
-            let tagX = 20; const mods = Array.isArray(p.mods) ? p.mods : [p.mod];
-            mods.forEach(m => {
-                const color = COLORS[m] || [100, 100, 100];
-                doc.setFillColor(color[0], color[1], color[2]); const textWidth = doc.getTextWidth(m);
-                doc.roundedRect(tagX, y + 16, textWidth + 6, 6, 1, 1, 'F');
-                doc.setTextColor(255, 255, 255); doc.setFontSize(7); doc.text(m, tagX + 3, y + 20.5);
-                tagX += textWidth + 10;
-            });
-            y += 30;
-        });
-        const pdfBlob = doc.output('blob');
-        const file = new File([pdfBlob], "Promo_Report.pdf", { type: 'application/pdf' });
-        if (navigator.share) await navigator.share({ files: [file], title: 'Promotion Report' });
-        else doc.save("Promo_Report.pdf");
-    }
-    
     render();
-    setInterval(render, 60000);
 </script>
 </body>
 </html>
