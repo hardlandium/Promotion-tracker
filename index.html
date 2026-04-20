@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V44.6</title>
+    <title>PROMO TRACKER V44.7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
             --bg: #000000;
@@ -33,7 +34,6 @@
         .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .ctrl-btn svg { width: 18px; height: 18px; }
         .btn-share svg { fill: var(--accent-blue); }
-        .btn-backup svg { fill: var(--text-dim); }
 
         .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 8px; border-radius: 10px; margin-bottom: 10px; }
         .modality-selector { display: flex; gap: 4px; margin-bottom: 8px; }
@@ -43,9 +43,11 @@
         .mod-btn[data-mod="BUNDLE"].active { border-color: var(--accent-orange); color: var(--accent-orange); background: rgba(255, 149, 0, 0.1); }
         .mod-btn[data-mod="DISCOUNT"].active { border-color: var(--accent-purple); color: var(--accent-purple); background: rgba(175, 82, 222, 0.1); }
 
-        .input-row { display: flex; gap: 4px; align-items: center; }
-        input[type="text"], input[type="date"] { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; outline: none; }
-        input[type="text"] { flex: 1; padding: 10px; font-size: 12px; }
+        .input-row { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
+        .input-row:last-child { margin-bottom: 0; }
+        input[type="text"], input[type="date"] { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; outline: none; padding: 10px; font-size: 12px; }
+        .name-input { flex: 2; }
+        .url-input { flex: 1; border-color: #333; color: var(--accent-blue); text-transform: none; }
         
         .icon-box { position: relative; width: 38px; height: 38px; background: var(--panel-inner); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; }
         .icon-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
@@ -53,21 +55,27 @@
         
         .save-btn { width: 45px; height: 38px; background: #1c1c1e; border: 1px solid #333; color: var(--accent-green); font-weight: 900; border-radius: 6px; cursor: pointer; font-size: 9px; flex-shrink: 0; }
 
-        /* Filter Section */
         .filter-bar { display: flex; gap: 6px; margin-bottom: 10px; padding: 0 4px; }
-        .filter-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 12px; border-radius: 20px; font-size: 9px; cursor: pointer; transition: 0.2s; }
+        .filter-chip { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 6px 12px; border-radius: 20px; font-size: 9px; cursor: pointer; }
         .filter-chip.active { background: var(--text-main); color: #000; border-color: var(--text-main); }
 
         .card { background: var(--panel-bg); margin-bottom: 6px; padding: 10px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
         .card-row-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; }
         .card-dates-compact { display: flex; gap: 6px; font-size: 12px; align-items: center; flex-wrap: wrap; }
-        .card-dates-compact .d-val { font-weight: 900; letter-spacing: 0.5px; }
-        .status-badge { font-size: 11px; font-weight: 900; font-style: italic; letter-spacing: 0.5px; }
+        .status-badge { font-size: 11px; font-weight: 900; font-style: italic; }
         .card-row-bottom { display: flex; justify-content: space-between; align-items: center; }
-        .p-title-compact { font-size: 15px; color: #fff; font-style: italic; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 15px; }
-        .card-actions-compact { display: flex; gap: 15px; align-items: center; flex-shrink: 0; }
+        
+        .p-title-compact { font-size: 15px; color: #fff; font-style: italic; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; cursor: pointer; text-decoration: underline rgba(255,255,255,0.1); }
+        .p-title-compact:active { color: var(--accent-blue); }
+
         .act-btn-sm { background: none; border: none; display: flex; align-items: center; cursor: pointer; }
         .act-btn-sm svg { width: 18px; height: 18px; }
+
+        /* QR Overlay */
+        #qr-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        #qr-container { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 30px; }
+        #qr-title { margin-bottom: 15px; font-size: 18px; text-align: center; }
+        .close-qr { background: var(--accent-red); color: #fff; padding: 15px 40px; border-radius: 30px; font-weight: 900; cursor: pointer; }
 
         .mod-tags-container { display: flex; gap: 3px; }
         .tag { font-size: 7px; padding: 2px 5px; border-radius: 3px; font-weight: 900; color: #fff; }
@@ -80,13 +88,18 @@
 </head>
 <body>
 
+<div id="qr-overlay">
+    <div id="qr-title"></div>
+    <div id="qr-container"></div>
+    <div class="close-qr" onclick="closeQR()">CLOSE</div>
+</div>
+
 <div class="container">
     <header>
         <div class="header-left"><div class="logo-sq">P</div><h1>TRACKER</h1></div>
         <div class="admin-controls">
             <div class="ctrl-btn btn-share" onclick="sharePDF()"><svg viewBox="0 0 24 24"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"/></svg></div>
-            <div class="ctrl-btn btn-backup" onclick="exportCSV()"><svg viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg></div>
-            <div class="ctrl-btn btn-backup" onclick="triggerImport()"><svg viewBox="0 0 24 24"><path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"/></svg></div>
+            <div class="ctrl-btn" onclick="exportCSV()" style="background:none;"><svg style="fill:var(--text-dim)" viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg></div>
         </div>
     </header>
 
@@ -97,9 +110,13 @@
             <div class="mod-btn" data-mod="DISCOUNT" onclick="toggleMod(this, 'DISCOUNT')">DISCOUNT</div>
         </div>
         <div class="input-row">
-            <input type="text" id="name" placeholder="PROMOTION NAME">
+            <input type="text" id="name" class="name-input" placeholder="PROMOTION NAME">
+            <input type="text" id="url" class="url-input" placeholder="PASTE URL HERE">
+        </div>
+        <div class="input-row">
             <div class="icon-box"><svg viewBox="0 0 24 24" style="fill:var(--accent-green)"><path d="M19,4H18V2H16V4H8V2H6V4H5C3.89,4 3,4.9 3,6V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V6A2,2 0 0,0 19,4M19,20H5V10H19V20M19,8H5V6H19V8M7,12H12V17H7V12Z"/></svg><input type="date" id="start"></div>
-            <div class="icon-box"><svg viewBox="0 0 24 24" style="fill:var(--accent-red)"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6V12L16,14.5L16.7,13.2L13.5,11.3V6H12Z"/></svg><input type="date" id="end"></div>
+            <div class="icon-box" style="margin-left:4px;"><svg viewBox="0 0 24 24" style="fill:var(--accent-red)"><path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6V12L16,14.5L16.7,13.2L13.5,11.3V6H12Z"/></svg><input type="date" id="end"></div>
+            <div style="flex:1"></div>
             <button class="save-btn" id="save-action-btn" onclick="handleAction()">ADD</button>
         </div>
     </div>
@@ -109,7 +126,6 @@
         <button class="filter-chip" id="filter-month" onclick="setFilter('month')">THIS MONTH</button>
     </div>
     
-    <input type="file" id="importFile" accept=".csv, text/csv, text/plain, .txt" onchange="importCSV(event)">
     <div id="list"></div>
 </div>
 
@@ -118,11 +134,24 @@
     let selectedMods = [];
     let editId = null;
     let currentFilter = 'all';
+    let qrcode = null;
 
     const COLORS = {
         CASHBACK: [0, 163, 255], BUNDLE: [255, 149, 0], DISCOUNT: [175, 82, 222],
         ACTIVE: [76, 217, 100], UPCOMING: [0, 163, 255], EXPIRED: [68, 68, 68], EXPIRING: [255, 59, 48]
     };
+
+    function showQR(name, url) {
+        if(!url) { alert("GEEN URL BESCHIKBAAR VOOR DEZE PROMO"); return; }
+        const overlay = document.getElementById('qr-overlay');
+        const container = document.getElementById('qr-container');
+        document.getElementById('qr-title').innerText = name;
+        container.innerHTML = "";
+        overlay.style.display = 'flex';
+        qrcode = new QRCode(container, { text: url, width: 256, height: 256, colorDark : "#000000", colorLight : "#ffffff" });
+    }
+
+    function closeQR() { document.getElementById('qr-overlay').style.display = 'none'; }
 
     function setFilter(type) {
         currentFilter = type;
@@ -131,38 +160,28 @@
         render();
     }
 
-    function checkNotifications() {
-        if (!("Notification" in window)) return;
-        if (Notification.permission === "default") Notification.requestPermission();
-        if (Notification.permission === "granted") {
-            const now = new Date(); now.setHours(0,0,0,0);
-            promos.forEach(p => {
-                const dE = new Date(p.end); dE.setHours(0,0,0,0);
-                const daysLeft = Math.round((dE - now) / (1000 * 60 * 60 * 24));
-                if (daysLeft >= 0 && daysLeft <= 1) {
-                    new Notification("PROMO ALERT", { body: `Promo "${p.name}" verloopt over ${daysLeft === 0 ? 'vandaag' : '1 dag'}!`, icon: "https://cdn-icons-png.flaticon.com/512/564/564619.png" });
-                }
-            });
-        }
-    }
-
     function toggleMod(btn, mod) {
         if(selectedMods.includes(mod)) { selectedMods = selectedMods.filter(m => m !== mod); btn.classList.remove('active'); } 
         else { selectedMods.push(mod); btn.classList.add('active'); }
     }
 
     function handleAction() {
-        const n = document.getElementById('name'), s = document.getElementById('start'), e = document.getElementById('end');
+        const n = document.getElementById('name'), u = document.getElementById('url'), s = document.getElementById('start'), e = document.getElementById('end');
         if(!n.value || !s.value || !e.value || selectedMods.length === 0) return;
+        
+        const promoData = { name: n.value, url: u.value, start: s.value, end: e.value, mods: [...selectedMods] };
+
         if(editId !== null) {
             const idx = promos.findIndex(p => p.id == editId);
-            if(idx !== -1) promos[idx] = { ...promos[idx], name: n.value, start: s.value, end: e.value, mods: [...selectedMods] };
+            if(idx !== -1) promos[idx] = { ...promos[idx], ...promoData };
             editId = null; document.getElementById('save-action-btn').innerText = 'ADD';
         } else {
-            promos.push({ id: Date.now(), name: n.value, start: s.value, end: e.value, mods: [...selectedMods] });
+            promos.push({ id: Date.now(), ...promoData });
         }
+        
         selectedMods = []; document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
-        saveAndRender(); n.value = ''; s.value = ''; e.value = '';
+        saveAndRender(); 
+        n.value = ''; u.value = ''; s.value = ''; e.value = '';
     }
 
     function saveAndRender() { localStorage.setItem('p_v36_final', JSON.stringify(promos)); render(); }
@@ -187,10 +206,8 @@
 
         let filteredPromos = promos.filter(p => {
             if (currentFilter === 'all') return true;
-            const sD = new Date(p.start);
             const eD = new Date(p.end);
-            return (sD.getMonth() === currentMonth && sD.getFullYear() === currentYear) || 
-                   (eD.getMonth() === currentMonth && eD.getFullYear() === currentYear);
+            return (eD.getMonth() === currentMonth && eD.getFullYear() === currentYear);
         });
 
         filteredPromos.sort((a,b) => new Date(a.end) - new Date(b.end));
@@ -201,8 +218,9 @@
             card.className = 'card'; card.style.borderLeft = `4px solid ${status.color}`;
             const sDate = p.start.split('-').reverse().slice(0,2).join('/');
             const eDate = p.end.split('-').reverse().slice(0,2).join('/');
-            const modsToShow = Array.isArray(p.mods) ? p.mods : (p.mod ? [p.mod] : []);
+            const modsToShow = Array.isArray(p.mods) ? p.mods : [p.mod];
             const tagsHtml = modsToShow.map(m => `<span class="tag tag-${m.toLowerCase()}">${m}</span>`).join('');
+            
             card.innerHTML = `
                 <div class="card-row-top">
                     <div class="card-dates-compact">
@@ -214,7 +232,7 @@
                     <div class="status-badge" style="color:${status.color}">${status.text}</div>
                 </div>
                 <div class="card-row-bottom">
-                    <div class="p-title-compact">${p.name}</div>
+                    <div class="p-title-compact" onclick="showQR('${p.name}', '${p.url || ''}')">${p.name}</div>
                     <div class="card-actions-compact">
                         <div class="act-btn-sm" onclick="editPromo(${p.id})"><svg viewBox="0 0 24 24" style="fill:var(--text-dim)"><path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg></div>
                         <div class="act-btn-sm" onclick="del(${p.id})"><svg viewBox="0 0 24 24" style="fill:var(--accent-red); opacity:0.8;"><path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg></div>
@@ -228,9 +246,10 @@
         const p = promos.find(x => x.id == id); if(!p) return;
         editId = p.id;
         document.getElementById('name').value = p.name;
+        document.getElementById('url').value = p.url || '';
         document.getElementById('start').value = p.start;
         document.getElementById('end').value = p.end;
-        selectedMods = Array.isArray(p.mods) ? [...p.mods] : (p.mod ? [p.mod] : []);
+        selectedMods = Array.isArray(p.mods) ? [...p.mods] : [p.mod];
         document.querySelectorAll('.mod-btn').forEach(btn => {
             const mod = btn.getAttribute('data-mod');
             if(selectedMods.includes(mod)) btn.classList.add('active'); else btn.classList.remove('active');
@@ -242,35 +261,14 @@
     function del(id) { if(confirm('DELETE?')) { promos = promos.filter(x => x.id != id); saveAndRender(); } }
     
     function exportCSV() {
-        if(promos.length === 0) return;
-        let csv = "ID,NAME,START,END,MODALITIES\n";
+        let csv = "ID,NAME,URL,START,END,MODALITIES\n";
         promos.forEach(p => { 
-            const mods = Array.isArray(p.mods) ? p.mods.join('|') : (p.mod || "");
-            csv += `${p.id},${p.name},${p.start},${p.end},${mods}\n`; 
+            const mods = Array.isArray(p.mods) ? p.mods.join('|') : p.mod;
+            csv += `${p.id},${p.name},${p.url || ''},${p.start},${p.end},${mods}\n`; 
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
         a.download = `PROMO_BACKUP.csv`; a.click();
-    }
-
-    function triggerImport() { document.getElementById('importFile').click(); }
-    
-    function importCSV(e) {
-        const file = e.target.files[0]; if(!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            const lines = ev.target.result.split('\n');
-            const newPromos = [];
-            for(let i = 1; i < lines.length; i++) {
-                const parts = lines[i].split(',');
-                if(parts.length >= 5) { 
-                    const mods = parts[4].trim().split('|');
-                    newPromos.push({ id: parts[0].trim(), name: parts[1].trim(), start: parts[2].trim(), end: parts[3].trim(), mods: mods }); 
-                }
-            }
-            if(newPromos.length > 0 && confirm(`Import ${newPromos.length} promos?`)) { promos = newPromos; saveAndRender(); }
-        };
-        reader.readAsText(file);
     }
 
     async function sharePDF() {
@@ -302,15 +300,12 @@
             y += 30;
         });
         const pdfBlob = doc.output('blob');
-        const fileName = `Promo_Report.pdf`;
-        if (navigator.share) {
-            const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-            try { await navigator.share({ files: [file], title: 'Promotion Report' }); } catch (err) { doc.save(fileName); }
-        } else { doc.save(fileName); }
+        const file = new File([pdfBlob], "Promo_Report.pdf", { type: 'application/pdf' });
+        if (navigator.share) await navigator.share({ files: [file], title: 'Promotion Report' });
+        else doc.save("Promo_Report.pdf");
     }
     
     render();
-    checkNotifications();
     setInterval(render, 60000);
 </script>
 </body>
