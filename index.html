@@ -65,6 +65,8 @@
 
         #qr-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
         #qr-container { background: #fff; padding: 20px; border-radius: 12px; }
+
+        #qr-pdf-gen { display: none; }
     </style>
 </head>
 <body>
@@ -74,6 +76,8 @@
     <div id="qr-container"></div>
     <div onclick="closeQR()" style="margin-top:30px; background:var(--accent-red); padding:15px 40px; border-radius:30px; font-weight:900; cursor:pointer;">CLOSE</div>
 </div>
+
+<div id="qr-pdf-gen"></div>
 
 <div class="container">
     <header>
@@ -114,7 +118,7 @@
     let editId = null;
 
     const COLORS = { 
-        ACTIVE: [76, 217,  green = 100], 
+        ACTIVE: [76, 217, 100], 
         UPCOMING: [0, 163, 255], 
         EXPIRED: [68, 68, 68], 
         EXPIRING: [255, 59, 48], 
@@ -131,59 +135,29 @@
         return { text: "ACTIVE", color: [76, 217, 100] };
     }
 
-    function triggerImport() { 
-        const fileInput = document.getElementById('importFile');
-        fileInput.value = ""; // Reset value om dezelfde file opnieuw te kunnen kiezen
-        fileInput.click(); 
-    }
-
-    function importCSV(e) {
-        const file = e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = function(ev) {
-            const lines = ev.target.result.split('\n');
-            const newPromos = [];
-            for(let i = 1; i < lines.length; i++) {
-                if(!lines[i].trim()) continue;
-                const p = lines[i].split(',');
-                if(p.length >= 6) {
-                    newPromos.push({ 
-                        id: p[0] || Date.now() + i, 
-                        name: p[1].trim(), 
-                        url: p[2].trim(), 
-                        start: p[3].trim(), 
-                        end: p[4].trim(), 
-                        mods: p[5].replace('\r', '').trim().split('|') 
-                    });
-                }
-            }
-            if(newPromos.length > 0) { 
-                promos = newPromos; 
-                save(); 
-                alert("IMPORT SUCCESSFUL: " + newPromos.length + " PROMOS");
-            }
-        };
-        reader.readAsText(file);
-    }
-
     async function handleFullShare() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
+        const qrHidden = document.getElementById('qr-pdf-gen');
+        
         doc.setFillColor(0, 0, 0); doc.rect(0, 0, 210, 297, 'F');
         doc.setFillColor(255, 59, 48); doc.roundedRect(15, 15, 10, 10, 2, 2, 'F');
         doc.setTextColor(255, 255, 255); doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.text("P", 18, 22.5);
         doc.setFontSize(12); doc.text("TRACKER REPORT", 30, 22);
         doc.setDrawColor(28, 28, 30); doc.line(15, 30, 195, 30);
+        
         let y = 45;
-        promos.sort((a,b) => new Date(a.end) - new Date(b.end)).forEach((p) => {
-            if (y > 260) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 25; }
+        const sorted = [...promos].sort((a,b) => new Date(a.end) - new Date(b.end));
+
+        for (const p of sorted) {
+            if (y > 250) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 25; }
             const stat = getStatusData(p.start, p.end);
-            doc.setFillColor(stat.color[0], stat.color[1], stat.color[2]); doc.rect(15, y, 2, 20, 'F');
+            
+            doc.setFillColor(stat.color[0], stat.color[1], stat.color[2]); doc.rect(15, y, 2, 22, 'F');
             doc.setFontSize(8); doc.setTextColor(136, 136, 136); doc.text(`${p.start.split('-').reverse().join('/')} > `, 20, y + 5);
             doc.setTextColor(stat.color[0], stat.color[1], stat.color[2]); doc.text(`${p.end.split('-').reverse().join('/')}`, 42, y + 5);
-            doc.setFontSize(9); doc.text(stat.text, 170, y + 5, { align: 'right' });
-            doc.setTextColor(255, 255, 255); doc.setFontSize(13); doc.setFont("helvetica", "bolditalic"); doc.text(p.name, 20, y + 14);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(12); doc.setFont("helvetica", "bolditalic"); doc.text(p.name, 20, y + 14);
+            
             let tx = 20;
             p.mods.forEach(m => {
                 const tc = COLORS.TAGS[m] || [255,255,255];
@@ -191,13 +165,34 @@
                 doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.setTextColor(tc[0], tc[1], tc[2]);
                 doc.text(m, tx + 9, y + 20, { align: 'center' }); tx += 22;
             });
-            y += 30;
-        });
-        const pdfBlob = doc.output('blob');
-        const file = new File([pdfBlob], "Promo_Report.pdf", { type: "application/pdf" });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try { await navigator.share({ files: [file], title: 'Promo Report' }); } catch (err) { doc.save("Promo_Report.pdf"); }
-        } else { doc.save("Promo_Report.pdf"); }
+
+            if (p.url && p.url.trim().length > 3) {
+                qrHidden.innerHTML = "";
+                new QRCode(qrHidden, { text: p.url.trim(), width: 128, height: 128, colorDark: "#000000", colorLight: "#ffffff" });
+                
+                await new Promise(r => setTimeout(r, 50));
+                const canvas = qrHidden.querySelector('canvas');
+                if (canvas) {
+                    const qrData = canvas.toDataURL("image/png");
+                    doc.setFillColor(255, 255, 255);
+                    doc.roundedRect(169, y - 1, 24, 24, 1, 1, 'F');
+                    doc.addImage(qrData, 'PNG', 170, y, 22, 22);
+                }
+            }
+            y += 32;
+        }
+
+        try {
+            const pdfBlob = doc.output('blob');
+            const file = new File([pdfBlob], "Promo_Report.pdf", { type: "application/pdf" });
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({ files: [file], title: 'Promo Report' });
+            } else {
+                doc.save("Promo_Report.pdf");
+            }
+        } catch (err) {
+            doc.save("Promo_Report.pdf");
+        }
     }
 
     function render() {
@@ -269,6 +264,39 @@
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
         a.download = 'backup.csv'; a.click();
     }
+
+    function triggerImport() { 
+        const fileInput = document.getElementById('importFile');
+        fileInput.value = ""; 
+        fileInput.click(); 
+    }
+
+    function importCSV(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = function(ev) {
+            const lines = ev.target.result.split('\n');
+            const newPromos = [];
+            for(let i = 1; i < lines.length; i++) {
+                if(!lines[i].trim()) continue;
+                const p = lines[i].split(',');
+                if(p.length >= 6) {
+                    newPromos.push({ 
+                        id: p[0] || Date.now() + i, 
+                        name: p[1].trim(), 
+                        url: p[2].trim(), 
+                        start: p[3].trim(), 
+                        end: p[4].trim(), 
+                        mods: p[5].replace('\r', '').trim().split('|') 
+                    });
+                }
+            }
+            if(newPromos.length > 0) { promos = newPromos; save(); alert("IMPORT SUCCESSFUL"); }
+        };
+        reader.readAsText(file);
+    }
+
     function showQR(n, u) { if(!u) return; document.getElementById('qr-title').innerText = n; document.getElementById('qr-container').innerHTML = ""; new QRCode(document.getElementById('qr-container'), u); document.getElementById('qr-overlay').style.display='flex'; }
     function closeQR() { document.getElementById('qr-overlay').style.display='none'; }
 
