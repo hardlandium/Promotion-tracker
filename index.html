@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V53.5</title>
+    <title>PROMO TRACKER V53.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -29,23 +29,32 @@
         .logo-sq { background: var(--accent-red); color: white; padding: 4px 10px; font-weight: 900; font-size: 16px; border-radius: 4px; }
         h1 { font-size: 13px; font-style: italic; letter-spacing: 1px; }
 
-        .admin-controls { display: flex; gap: 6px; }
-        .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .admin-controls { display: flex; gap: 8px; }
+        .ctrl-btn { background: var(--panel-bg); border: 1px solid #222; width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
+        .ctrl-btn:active { background: #1c1c1e; }
+        .ctrl-btn svg { width: 20px; height: 20px; }
 
         .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 8px; border-radius: 10px; margin-bottom: 10px; }
         .modality-selector { display: flex; gap: 6px; margin-bottom: 12px; }
-        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid #1c1c1e; padding: 10px 2px; font-size: 8px; cursor: pointer; border-radius: 6px; font-weight: 900; text-align: center; }
-        .mod-btn.active[data-mod="CASHBACK"] { border-color: var(--accent-blue); color: #fff; }
-        .mod-btn.active[data-mod="BUNDLE"] { border-color: var(--accent-orange); color: #fff; }
-        .mod-btn.active[data-mod="DISCOUNT"] { border-color: var(--accent-purple); color: #fff; }
+        
+        /* AANGEPAST: Subtiele gloed per type */
+        .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid #1c1c1e; border-bottom-width: 3px; padding: 10px 2px; font-size: 8px; cursor: pointer; border-radius: 6px; font-weight: 900; text-align: center; color: var(--text-dim); }
+        .mod-btn[data-mod="CASHBACK"] { border-bottom-color: rgba(0, 163, 255, 0.3); }
+        .mod-btn[data-mod="BUNDLE"] { border-bottom-color: rgba(255, 149, 0, 0.3); }
+        .mod-btn[data-mod="DISCOUNT"] { border-bottom-color: rgba(175, 82, 222, 0.3); }
+
+        .mod-btn.active { color: #fff; border-bottom-width: 3px; }
+        .mod-btn.active[data-mod="CASHBACK"] { border-color: var(--accent-blue); }
+        .mod-btn.active[data-mod="BUNDLE"] { border-color: var(--accent-orange); }
+        .mod-btn.active[data-mod="DISCOUNT"] { border-color: var(--accent-purple); }
 
         .input-row { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
         input, select { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; padding: 10px; font-size: 12px; outline: none; }
         
         .filter-container { margin-bottom: 12px; }
-        .filter-scroll-wrapper { display: flex; overflow-x: auto; gap: 4px; padding: 4px 0; justify-content: flex-start; scrollbar-width: none; }
-        .filter-chip { flex: 0 0 auto; background: var(--panel-inner); border: 1px solid #1c1c1e; color: #444; padding: 8px 14px; border-radius: 20px; font-size: 9px; font-weight: 900; cursor: pointer; }
-        .filter-chip.active { border-color: var(--accent-blue); color: #fff; }
+        .filter-scroll-wrapper { display: flex; overflow-x: auto; gap: 6px; padding: 4px 0; justify-content: flex-start; scrollbar-width: none; }
+        .filter-chip { flex: 0 0 auto; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 10px 15px; border-radius: 6px; font-size: 9px; font-weight: 900; cursor: pointer; }
+        .filter-chip.active { border-color: var(--accent-blue); color: #fff; background: var(--panel-bg); }
 
         .card { background: var(--panel-bg); margin-bottom: 8px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid #333; }
         .card-row-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
@@ -82,9 +91,15 @@
     <header>
         <div style="display:flex; align-items:center; gap:8px;"><div class="logo-sq">P</div><h1>TRACKER</h1></div>
         <div class="admin-controls">
-            <div class="ctrl-btn" onclick="handleFullShare()" style="border-color: var(--accent-blue);"><svg viewBox="0 0 24 24" style="fill:var(--accent-blue); width:20px;"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"/></svg></div>
-            <div class="ctrl-btn" onclick="exportCSV()"><svg style="fill:var(--text-dim)" viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg></div>
-            <div class="ctrl-btn" onclick="document.getElementById('importFile').click()"><svg style="fill:var(--accent-green)" viewBox="0 0 24 24"><path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"/></svg></div>
+            <div class="ctrl-btn" onclick="handleFullShare()">
+                <svg viewBox="0 0 24 24" style="fill:var(--accent-blue);"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.91 18,21.91C19.61,21.91 20.92,20.61 20.92,19A2.92,2.92 0 0,0 18,16.08Z"/></svg>
+            </div>
+            <div class="ctrl-btn" onclick="exportCSV()">
+                <svg style="fill:var(--text-dim)" viewBox="0 0 24 24"><path d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+            </div>
+            <div class="ctrl-btn" onclick="document.getElementById('importFile').click()">
+                <svg style="fill:var(--accent-green)" viewBox="0 0 24 24"><path d="M9,16V10H5L12,3L19,10H15V16H9M5,20V18H19V20H5Z"/></svg>
+            </div>
         </div>
     </header>
 
@@ -229,16 +244,9 @@
         if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: "application/pdf" })] })) {
             const file = new File([blob], fileName, { type: "application/pdf" });
             try {
-                await navigator.share({
-                    files: [file],
-                    title: 'Promo Report',
-                });
-            } catch (err) {
-                doc.save(fileName);
-            }
-        } else {
-            doc.save(fileName);
-        }
+                await navigator.share({ files: [file], title: 'Promo Report' });
+            } catch (err) { doc.save(fileName); }
+        } else { doc.save(fileName); }
     }
 
     function showQR(n, u) { 
