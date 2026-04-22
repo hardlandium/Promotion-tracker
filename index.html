@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V53.9</title>
+    <title>PROMO TRACKER V54.3</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -37,13 +37,11 @@
         .input-panel { background: var(--panel-bg); border: 1px solid var(--border); padding: 8px; border-radius: 10px; margin-bottom: 10px; }
         .modality-selector { display: flex; gap: 6px; margin-bottom: 12px; }
         
-        /* AANGEPAST: Subtiele gloed per type */
         .mod-btn { flex: 1; background: var(--panel-inner); border: 1px solid #1c1c1e; border-bottom-width: 3px; padding: 10px 2px; font-size: 8px; cursor: pointer; border-radius: 6px; font-weight: 900; text-align: center; color: var(--text-dim); }
+        .mod-btn.active { color: #fff; border-bottom-width: 3px; }
         .mod-btn[data-mod="CASHBACK"] { border-bottom-color: rgba(0, 163, 255, 0.3); }
         .mod-btn[data-mod="BUNDLE"] { border-bottom-color: rgba(255, 149, 0, 0.3); }
         .mod-btn[data-mod="DISCOUNT"] { border-bottom-color: rgba(175, 82, 222, 0.3); }
-
-        .mod-btn.active { color: #fff; border-bottom-width: 3px; }
         .mod-btn.active[data-mod="CASHBACK"] { border-color: var(--accent-blue); }
         .mod-btn.active[data-mod="BUNDLE"] { border-color: var(--accent-orange); }
         .mod-btn.active[data-mod="DISCOUNT"] { border-color: var(--accent-purple); }
@@ -51,22 +49,26 @@
         .input-row { display: flex; gap: 4px; margin-bottom: 4px; align-items: center; }
         input, select { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; padding: 10px; font-size: 12px; outline: none; }
         
-        .filter-container { margin-bottom: 12px; }
-        .filter-scroll-wrapper { display: flex; overflow-x: auto; gap: 6px; padding: 4px 0; justify-content: flex-start; scrollbar-width: none; }
-        .filter-chip { flex: 0 0 auto; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 10px 15px; border-radius: 6px; font-size: 9px; font-weight: 900; cursor: pointer; }
+        .filter-container { margin-bottom: 15px; }
+        .filter-row { display: flex; gap: 4px; width: 100%; }
+        .filter-chip { flex: 1; background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-dim); padding: 12px 2px; border-radius: 6px; font-size: 8.5px; font-weight: 900; cursor: pointer; text-align: center; transition: 0.2s; white-space: nowrap; }
         .filter-chip.active { border-color: var(--accent-blue); color: #fff; background: var(--panel-bg); }
 
         .card { background: var(--panel-bg); margin-bottom: 8px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid #333; }
         .card-row-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
         .p-title-compact { font-size: 12px; color: #fff; font-weight: 900; line-height: 1.2; flex: 1; cursor: pointer; }
         
-        .date-container { background: #000; border: 1px solid #1c1c1e; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; display: inline-flex; align-items: center; gap: 8px; }
-        .date-text { font-size: 11px; font-weight: 900; color: #fff; }
+        /* HERZIEN: Tags links naast datum */
+        .card-meta-line { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+        .left-meta-group { display: flex; align-items: center; gap: 8px; flex: 1; }
+        
+        .date-container { background: #000; border: 1px solid #1c1c1e; padding: 6px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .date-text { font-size: 10px; font-weight: 900; color: #fff; }
 
-        .meta-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #1a1a1a; padding-top: 8px; }
-        .tag-container { display: flex; gap: 4px; align-items: center; }
-        .tag { font-size: 8px; padding: 3px 8px; border-radius: 4px; font-weight: 900; background: #000; border: 1px solid #333; }
-        .card-actions { display: flex; gap: 15px; align-items: center; }
+        .tag-container { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+        .tag { font-size: 7px; padding: 3px 6px; border-radius: 4px; font-weight: 900; background: #000; border: 1px solid #333; white-space: nowrap; }
+        
+        .card-actions { display: flex; gap: 15px; align-items: center; padding-left: 10px; }
 
         .icon-box { position: relative; width: 38px; height: 38px; background: var(--panel-inner); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; border-radius: 6px; }
         .icon-box input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; }
@@ -74,7 +76,6 @@
 
         #qr-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 1000; flex-direction: column; align-items: center; justify-content: center; }
         #qr-container { background: #fff; padding: 20px; border-radius: 12px; }
-        #qr-pdf-gen { position: absolute; left: -9999px; }
     </style>
 </head>
 <body>
@@ -85,7 +86,7 @@
     <div onclick="closeQR()" style="margin-top:30px; background:var(--accent-red); padding:15px 40px; border-radius:30px; font-weight:900; cursor:pointer;">CLOSE</div>
 </div>
 
-<div id="qr-pdf-gen"></div>
+<div id="qr-pdf-gen" style="position: absolute; left: -9999px;"></div>
 
 <div class="container">
     <header>
@@ -126,7 +127,7 @@
     </div>
 
     <div class="filter-container">
-        <div class="filter-scroll-wrapper" id="dept-filters">
+        <div class="filter-row" id="dept-filters">
             <div class="filter-chip active" onclick="setFilter('MDA', this)">MDA</div>
             <div class="filter-chip" onclick="setFilter('SDA', this)">SDA</div>
             <div class="filter-chip" onclick="setFilter('TELCO', this)">TELCO</div>
@@ -178,20 +179,22 @@
             const stat = getStatusData(p.start, p.end);
             const card = document.createElement('div');
             card.className = 'card'; card.style.borderLeftColor = `rgb(${stat.color.join(',')})`;
+            
             card.innerHTML = `
                 <div class="card-row-top">
                     <div class="p-title-compact" onclick="showQR('${p.name}', '${p.url||''}')">${p.name}</div>
                     <div style="color:rgb(${stat.color.join(',')}); font-size: 8px; font-weight:900;">${stat.text}</div>
                 </div>
-                <div class="date-container">
-                    <span class="date-text">${p.start.split('-').reverse().slice(0,2).join('/')}</span>
-                    <span style="color:#444; font-size:9px;">➤</span>
-                    <span class="date-text" style="color:rgb(${stat.color.join(',')})">${p.end.split('-').reverse().slice(0,2).join('/')}</span>
-                </div>
-                <div class="meta-row">
-                    <div class="tag-container">
-                        <span class="tag" style="border-color:#444; color:#fff;">${p.dept === 'TELECOM' ? 'TELCO' : p.dept}</span>
-                        ${p.mods.map(m => `<span class="tag" style="border-color:rgb(${COLORS.TAGS[m].join(',')}); color:rgb(${COLORS.TAGS[m].join(',')})">${m}</span>`).join('')}
+                <div class="card-meta-line">
+                    <div class="left-meta-group">
+                        <div class="date-container">
+                            <span class="date-text">${p.start.split('-').reverse().slice(0,2).join('/')}</span>
+                            <span style="color:#444; font-size:8px;">➤</span>
+                            <span class="date-text" style="color:rgb(${stat.color.join(',')})">${p.end.split('-').reverse().slice(0,2).join('/')}</span>
+                        </div>
+                        <div class="tag-container">
+                            ${p.mods.map(m => `<span class="tag" style="border-color:rgb(${COLORS.TAGS[m].join(',')}); color:rgb(${COLORS.TAGS[m].join(',')})">${m}</span>`).join('')}
+                        </div>
                     </div>
                     <div class="card-actions">
                         <div onclick="editPromo(${p.id})"><svg viewBox="0 0 24 24" style="width:14px; fill:var(--text-dim)"><path d="M3,17.25V21H6.75L17.81,9.93L14.07,6.19L3,17.25Z"/></svg></div>
