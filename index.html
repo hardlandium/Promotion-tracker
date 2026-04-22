@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V53.4</title>
+    <title>PROMO TRACKER V53.5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -157,7 +157,7 @@
     function render() {
         const container = document.getElementById('list');
         container.innerHTML = '';
-        promos.filter(p => p.dept === currentDeptFilter)
+        promos.filter(p => (p.dept === currentDeptFilter || (p.dept === 'TELECOM' && currentDeptFilter === 'TELCO')))
         .sort((a,b) => new Date(a.end) - new Date(b.end))
         .forEach(p => {
             const stat = getStatusData(p.start, p.end);
@@ -175,7 +175,7 @@
                 </div>
                 <div class="meta-row">
                     <div class="tag-container">
-                        <span class="tag" style="border-color:#444; color:#fff;">${p.dept}</span>
+                        <span class="tag" style="border-color:#444; color:#fff;">${p.dept === 'TELECOM' ? 'TELCO' : p.dept}</span>
                         ${p.mods.map(m => `<span class="tag" style="border-color:rgb(${COLORS.TAGS[m].join(',')}); color:rgb(${COLORS.TAGS[m].join(',')})">${m}</span>`).join('')}
                     </div>
                     <div class="card-actions">
@@ -196,7 +196,7 @@
         doc.text(`PROMO REPORT: ${currentDeptFilter}`, 20, 20);
         
         let y = 35;
-        const list = promos.filter(p => p.dept === currentDeptFilter);
+        const list = promos.filter(p => (p.dept === currentDeptFilter || (p.dept === 'TELECOM' && currentDeptFilter === 'TELCO')));
         for (const p of list) {
             if (y > 260) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 20; }
             const stat = getStatusData(p.start, p.end);
@@ -205,8 +205,10 @@
             doc.setFontSize(10); doc.text(`${p.start.split('-').reverse().join('/')} TOT ${p.end.split('-').reverse().join('/')}`, 22, y + 14);
             let tx = 22; doc.setFontSize(8);
             p.mods.forEach(m => {
-                const c = COLORS.TAGS[m]; doc.setTextColor(c[0], c[1], c[2]);
-                doc.text(`[ ${m} ]`, tx, y + 22); tx += 30;
+                if(COLORS.TAGS[m]) {
+                   const c = COLORS.TAGS[m]; doc.setTextColor(c[0], c[1], c[2]);
+                   doc.text(`[ ${m} ]`, tx, y + 22); tx += 30;
+                }
             });
 
             if (p.url) {
@@ -220,9 +222,23 @@
             }
             y += 35; doc.setDrawColor(40, 40, 40); doc.line(20, y - 5, 195, y - 5);
         }
+        
         const blob = doc.output('blob');
-        const file = new File([blob], `Report_${currentDeptFilter}.pdf`, { type: "application/pdf" });
-        if (navigator.share) await navigator.share({ files: [file] }); else doc.save(`Report_${currentDeptFilter}.pdf`);
+        const fileName = "Promo_Report.pdf";
+        
+        if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: "application/pdf" })] })) {
+            const file = new File([blob], fileName, { type: "application/pdf" });
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'Promo Report',
+                });
+            } catch (err) {
+                doc.save(fileName);
+            }
+        } else {
+            doc.save(fileName);
+        }
     }
 
     function showQR(n, u) { 
@@ -263,7 +279,6 @@
     }
 
     function save() { 
-        // Forceer TELCO voor oude data bij opslaan
         promos = promos.map(p => ({...p, dept: p.dept === 'TELECOM' ? 'TELCO' : p.dept}));
         localStorage.setItem('p_v36_final', JSON.stringify(promos)); 
         render(); 
