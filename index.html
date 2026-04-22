@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PROMO TRACKER V53.3</title>
+    <title>PROMO TRACKER V53.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
@@ -43,8 +43,8 @@
         input, select { background: var(--panel-inner); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; padding: 10px; font-size: 12px; outline: none; }
         
         .filter-container { margin-bottom: 12px; }
-        .filter-scroll-wrapper { display: flex; overflow-x: auto; gap: 6px; padding: 4px 0; justify-content: flex-end; scrollbar-width: none; }
-        .filter-chip { flex: 0 0 auto; background: var(--panel-inner); border: 1px solid #1c1c1e; color: #004a75; padding: 8px 16px; border-radius: 20px; font-size: 9px; font-weight: 900; cursor: pointer; }
+        .filter-scroll-wrapper { display: flex; overflow-x: auto; gap: 4px; padding: 4px 0; justify-content: flex-start; scrollbar-width: none; }
+        .filter-chip { flex: 0 0 auto; background: var(--panel-inner); border: 1px solid #1c1c1e; color: #444; padding: 8px 14px; border-radius: 20px; font-size: 9px; font-weight: 900; cursor: pointer; }
         .filter-chip.active { border-color: var(--accent-blue); color: #fff; }
 
         .card { background: var(--panel-bg); margin-bottom: 8px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid #333; }
@@ -98,7 +98,7 @@
             <input type="text" id="name" style="flex:2" placeholder="PROMO NAME">
             <select id="dept">
                 <option value="MDA">MDA</option><option value="SDA">SDA</option>
-                <option value="TELECOM">TELECOM</option><option value="IT">IT</option>
+                <option value="TELCO">TELCO</option><option value="IT">IT</option>
                 <option value="TV">TV</option><option value="HIFI">HIFI</option>
             </select>
         </div>
@@ -111,11 +111,13 @@
     </div>
 
     <div class="filter-container">
-        <div class="filter-scroll-wrapper">
-            <div class="filter-chip active" onclick="setFilter('ALL', this)">ALL</div>
-            <div class="filter-chip" onclick="setFilter('MDA', this)">MDA</div><div class="filter-chip" onclick="setFilter('SDA', this)">SDA</div>
-            <div class="filter-chip" onclick="setFilter('TELECOM', this)">TELECOM</div><div class="filter-chip" onclick="setFilter('IT', this)">IT</div>
-            <div class="filter-chip" onclick="setFilter('TV', this)">TV</div><div class="filter-chip" onclick="setFilter('HIFI', this)">HIFI</div>
+        <div class="filter-scroll-wrapper" id="dept-filters">
+            <div class="filter-chip active" onclick="setFilter('MDA', this)">MDA</div>
+            <div class="filter-chip" onclick="setFilter('SDA', this)">SDA</div>
+            <div class="filter-chip" onclick="setFilter('TELCO', this)">TELCO</div>
+            <div class="filter-chip" onclick="setFilter('IT', this)">IT</div>
+            <div class="filter-chip" onclick="setFilter('TV', this)">TV</div>
+            <div class="filter-chip" onclick="setFilter('HIFI', this)">HIFI</div>
         </div>
     </div>
 
@@ -127,7 +129,7 @@
     let promos = JSON.parse(localStorage.getItem('p_v36_final')) || [];
     let selectedMods = [];
     let editId = null;
-    let currentDeptFilter = 'ALL';
+    let currentDeptFilter = 'MDA';
 
     const COLORS = { 
         ACTIVE: [76, 217, 100], UPCOMING: [0, 163, 255], 
@@ -155,7 +157,7 @@
     function render() {
         const container = document.getElementById('list');
         container.innerHTML = '';
-        promos.filter(p => currentDeptFilter === 'ALL' || p.dept === currentDeptFilter)
+        promos.filter(p => p.dept === currentDeptFilter)
         .sort((a,b) => new Date(a.end) - new Date(b.end))
         .forEach(p => {
             const stat = getStatusData(p.start, p.end);
@@ -173,7 +175,7 @@
                 </div>
                 <div class="meta-row">
                     <div class="tag-container">
-                        <span class="tag" style="border-color:#444; color:#fff;">${p.dept || 'MDA'}</span>
+                        <span class="tag" style="border-color:#444; color:#fff;">${p.dept}</span>
                         ${p.mods.map(m => `<span class="tag" style="border-color:rgb(${COLORS.TAGS[m].join(',')}); color:rgb(${COLORS.TAGS[m].join(',')})">${m}</span>`).join('')}
                     </div>
                     <div class="card-actions">
@@ -194,7 +196,7 @@
         doc.text(`PROMO REPORT: ${currentDeptFilter}`, 20, 20);
         
         let y = 35;
-        const list = promos.filter(p => currentDeptFilter === 'ALL' || p.dept === currentDeptFilter);
+        const list = promos.filter(p => p.dept === currentDeptFilter);
         for (const p of list) {
             if (y > 260) { doc.addPage(); doc.setFillColor(0,0,0); doc.rect(0,0,210,297,'F'); y = 20; }
             const stat = getStatusData(p.start, p.end);
@@ -220,7 +222,7 @@
         }
         const blob = doc.output('blob');
         const file = new File([blob], `Report_${currentDeptFilter}.pdf`, { type: "application/pdf" });
-        if (navigator.share) await navigator.share({ files: [file] }); else doc.save("Report.pdf");
+        if (navigator.share) await navigator.share({ files: [file] }); else doc.save(`Report_${currentDeptFilter}.pdf`);
     }
 
     function showQR(n, u) { 
@@ -253,21 +255,28 @@
         const p = promos.find(x => x.id == id); editId = p.id;
         document.getElementById('name').value = p.name; document.getElementById('start').value = p.start;
         document.getElementById('end').value = p.end; document.getElementById('url').value = p.url || '';
-        document.getElementById('dept').value = p.dept || 'MDA';
+        document.getElementById('dept').value = (p.dept === 'TELECOM') ? 'TELCO' : p.dept;
         selectedMods = [...p.mods];
         document.querySelectorAll('.mod-btn').forEach(b => b.classList.toggle('active', selectedMods.includes(b.dataset.mod)));
         document.getElementById('save-action-btn').innerText = 'SAVE';
         window.scrollTo(0,0);
     }
 
-    function save() { localStorage.setItem('p_v36_final', JSON.stringify(promos)); render(); }
+    function save() { 
+        // Forceer TELCO voor oude data bij opslaan
+        promos = promos.map(p => ({...p, dept: p.dept === 'TELECOM' ? 'TELCO' : p.dept}));
+        localStorage.setItem('p_v36_final', JSON.stringify(promos)); 
+        render(); 
+    }
     function del(id) { if(confirm('DELETE?')) { promos = promos.filter(x => x.id != id); save(); } }
+    
     function exportCSV() {
         let csv = "ID,NAME,URL,START,END,MODS,DEPT\n";
         promos.forEach(p => csv += `${p.id},${p.name},${p.url},${p.start},${p.end},${p.mods.join('|')},${p.dept}\n`);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
         a.download = 'promos.csv'; a.click();
     }
+    
     function importCSV(e) {
         const file = e.target.files[0]; if(!file) return;
         const reader = new FileReader();
@@ -277,7 +286,9 @@
             for(let i = 1; i < lines.length; i++) {
                 if(!lines[i].trim()) continue;
                 const p = lines[i].split(',');
-                newPromos.push({ id: p[0], name: p[1], url: p[2], start: p[3], end: p[4], mods: p[5].split('|'), dept: p[6] });
+                let dept = p[6];
+                if(dept === 'TELECOM') dept = 'TELCO';
+                newPromos.push({ id: p[0], name: p[1], url: p[2], start: p[3], end: p[4], mods: p[5].split('|'), dept: dept });
             }
             promos = newPromos; save();
         };
